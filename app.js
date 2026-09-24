@@ -21,6 +21,79 @@ function quoteView(){const d=new Date();const ds=`${String(d.getDate()).padStart
 <div class="card"><h2 class="section-title">6. Services</h2><input id="srv-search" class="input" placeholder="Search service"><div id="services" class="row" style="margin:10px 0;max-height:150px;overflow:auto"></div><textarea id="selected-services" class="textarea" placeholder="Selected services"></textarea><div class="row" style="margin-top:10px"><button class="btn secondary" id="clear-services">Clear Box</button><button class="btn success" id="save-quote">Guardar cotización</button><button class="btn primary hidden" id="update-quote">Actualizar cotización</button><button class="btn danger" id="clear-form">Limpiar todo</button></div></div>
 <div class="card"><h2 class="section-title">Productos en esta Cotización</h2><div class="scroll-x"><table class="data-table" id="cart-table"><thead><tr><th>Producto</th><th>SKU</th><th>Qty</th><th>Price</th><th>Revenue</th><th>Winner</th><th></th></tr></thead><tbody></tbody></table></div><button class="btn secondary" id="add-cart" style="margin-top:10px">Agregar producto al quote</button></div>`}
 function carrierCard(title,fields,kind){const id=kind.replace(/\W/g,'');let extra='';if(kind==='WWE'||kind==='CBCFS'){extra=`<label style="display:block;margin-top:8px"><span class="label">TRANSPORT</span><select id="${kind.toLowerCase()}_trans" class="select">${carriers.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`}if(kind==='Uber Freight'){extra=`<label style="display:block;margin-top:8px"><span class="label">MODO</span><select id="uber_mode" class="select"><option>TL</option><option>LTL</option></select></label><label style="display:block;margin-top:8px"><span class="label">TRANSPORT</span><select id="uber_trans" class="select">${carriers.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`}if(kind==='LOCAL DELIVERY'){extra=`<label style="display:block;margin-top:8px"><span class="label">LÍMITE ALTURA</span><select id="maxheight_carrier" class="select"><option>Altura Máxima: 90"</option><option>Altura Máxima: 41"</option><option>Altura Máxima: Personalizada</option></select></label><label style="display:block;margin-top:8px"><span class="label">DESTINO</span><input id="ld_address" class="input" readonly></label>`}return `<div class="carrier" id="card-${id}"><div class="between"><b>${title}</b><span class="pill" id="ship-${id}">$0.00</span></div>${extra}${fields.map(f=>`<label style="display:block;margin-top:8px"><span class="label">${f.replace(/_/g,' ').toUpperCase()}</span><input id="${f}" class="input" type="number" step="0.01"></label>`).join('')}<div class="muted" id="exact-${id}">Exact: $0.00</div></div>`}
+function arrangeLocalLayout(){
+  const view=$('#view');if(!view)return;
+  view.className='quote-grid';
+  const cards=[...view.querySelectorAll(':scope > .card')];if(cards.length<7)return;
+  ['area-general','area-customer','area-product','area-cubic','area-carriers','area-services-source','area-cart'].forEach((cls,i)=>cards[i]?.classList.add(cls));
+  const product=cards[2], cubic=cards[3], carrier=cards[4], servicesCard=cards[5], cart=cards[6];
+  const mainGrid=product.querySelector('.grid.g3'), details=product.querySelector('.grid.g4');
+  if(mainGrid&&!product.querySelector('.product-pricing')){
+    const kids=[...mainGrid.children], pricingKids=kids.slice(3);
+    pricingKids.forEach(x=>x.remove());
+    const skuLabel=kids[1];
+    if(skuLabel&&!$('#record-id')){
+      const lab=document.createElement('label');
+      lab.innerHTML='<span class="label">RECORD ID</span><input id="record-id" class="input result" readonly>';
+      mainGrid.insertBefore(lab,mainGrid.children[2]||null);
+    }
+    const pg=document.createElement('div');pg.className='grid g3 product-pricing';
+    pricingKids.forEach(x=>pg.appendChild(x));
+    if(details)details.parentElement.insertBefore(pg,details.nextSibling); else product.appendChild(pg);
+  }
+  if(details){
+    const ver=details.querySelector('label:last-child');
+    if(ver&&ver.querySelector('#pverified'))ver.remove();
+    const repack=details.querySelector('#prepack')?.closest('label');
+    if(repack)repack.classList.add('repack-control');
+  }
+  const bundle=$('#pbundle')?.closest('label');
+  if(bundle&&bundle.parentElement!==cubic){cubic.appendChild(bundle);bundle.classList.add('bundle-wrap');}
+  if(!$('#pverified')){
+    const lab=document.createElement('label');lab.className='verified-wrap';lab.innerHTML='<span class="label">VERIFIED CONFIGURATION</span><textarea id="pverified" class="textarea verified" readonly></textarea>';cubic.appendChild(lab);
+  }
+  if(carrier&&servicesCard&&servicesCard.parentElement!==carrier.querySelector('.carrier-grid')){
+    servicesCard.classList.add('embedded-service');carrier.querySelector('.carrier-grid')?.appendChild(servicesCard);
+  }
+  const winner=$('#winner');
+  if(winner&&!$('#winner-panel')){
+    const wp=document.createElement('section');wp.id='winner-panel';wp.className='section-card winner-card area-winner';wp.innerHTML='<div class="section-title">🏆 PLATAFORMA GANADORA</div>';wp.appendChild(winner);view.appendChild(wp);
+  }
+  let bar=view.querySelector('.action-bar');
+  if(!bar){
+    bar=document.createElement('div');bar.className='action-bar';
+    bar.innerHTML='<button class="btn btn-lilac" id="database">🗄️ Data Base</button><span id="save-slot"></span><button class="btn btn-warning" id="view-quotes">View quotes</button><button class="btn btn-primary" id="export">📤 Export</button><span class="action-spacer"></span><button class="btn btn-primary" id="toggle-note">+ Note</button><button class="btn btn-success" id="add-product">➕ Add product</button><button class="btn btn-danger" id="clear-product">🧹 Limpiar 3-5</button><button class="btn btn-danger" id="clear-all">🧨 Limpiar Todo</button>';view.appendChild(bar);
+  }
+  const save=$('#save-quote'),update=$('#update-quote');
+  if(save&&save.parentElement!==bar)$('#save-slot').appendChild(save);
+  if(update&&update.parentElement!==bar)$('#save-slot').appendChild(update);
+  $('#save-slot').classList.add('save-slot');
+  $('#database').onclick=()=>openDatabase('products');
+  $('#view-quotes').onclick=openQuotesModal;
+  $('#export').onclick=openExportModal;
+  $('#add-product').onclick=()=>$('#add-cart')?.click();
+  $('#clear-product').onclick=clearProductWeb;
+  $('#clear-all').onclick=clearAllWeb;
+  const clearOld=$('#clear-form');if(clearOld)clearOld.classList.add('hidden');
+  const note=$('#pnota');
+  if(note){note.classList.add('hidden','note-floating');bar.insertBefore(note,$('#toggle-note'));$('#toggle-note').onclick=()=>{note.classList.toggle('hidden');if(!note.classList.contains('hidden'))note.focus();};}
+  const company=$('#qcompany');
+  if(company&&!$('#save-cust')){
+    const wrap=document.createElement('div');wrap.className='input-with-btn';company.parentElement.insertBefore(wrap,company);wrap.appendChild(company);
+    const btn=document.createElement('button');btn.type='button';btn.id='save-cust';btn.className='icon-btn';btn.textContent='💾';btn.title='Guardar cliente';wrap.appendChild(btn);btn.onclick=saveCustomerWeb;
+  }
+  if(servicesCard&&!$('#add-services')){
+    const apply=document.createElement('div');apply.className='services-apply';apply.innerHTML='<span>Apply to:</span><label class="form-check"><input id="apply-wwe" class="form-check-input" type="checkbox" checked><span class="form-check-label">WWE</span></label><label class="form-check"><input id="apply-cbcfs" class="form-check-input" type="checkbox"><span class="form-check-label">CBCFS</span></label>';
+    const search=servicesCard.querySelector('#srv-search');search?.parentElement?.insertBefore(apply,search);
+    const b=document.createElement('button');b.id='add-services';b.className='btn btn-success w-100 mt-2';b.textContent='Add Selected';b.onclick=addSelectedServicesWeb;search?.parentElement?.appendChild(b);
+  }
+}
+function updateRecordId(){const d=String($('#qdate')?.value||'').replaceAll('/',''),q=String($('#qnum')?.value||'').trim().replace(/\s/g,''),s=String($('#psku')?.value||'').replace(/\s/g,''),n=String($('#pqty')?.value||'').trim();const e=$('#record-id');if(e)e.value=d&&q&&s&&n?d+'_'+q+'P'+s.slice(0,4).toUpperCase()+n:'';}
+function addSelectedServicesWeb(){const w=$('#apply-wwe')?.checked,c=$('#apply-cbcfs')?.checked;if(!w&&!c){toast('Selecciona WWE o CBCFS',false);return}const vals=[...document.querySelectorAll('#services input[type=checkbox]:checked')].map(x=>x.value);if(!vals.length){toast('Selecciona al menos un servicio',false);return}const out=[];vals.forEach(v=>{if(w)out.push('WWE: '+v);if(c)out.push('CBCFS: '+v)});const old=String($('#selected-services').value||'').split(',').map(x=>x.trim()).filter(Boolean);$('#selected-services').value=[...new Set(old.concat(out))].join(', ');document.querySelectorAll('#services input[type=checkbox]').forEach(x=>x.checked=false);toast('Servicios agregados');}
+function saveCustomerWeb(){const company=$('#qcompany').value.trim(),address=$('#qaddress').value.trim(),type=$('#qtype').value;if(!company||!address){toast('Falta Company or Name o Address',false);return}const ex=state.customers.find(x=>norm(x.company_name)===norm(company)&&norm(x.address)===norm(address)),obj={type,company_name:company,address,accessories:$('#selected-services').value||'',local_delivery_cost_1:$('#ld_cost1')?.value||'-',local_delivery_cost_extra:$('#ld_cost_extra')?.value||'-'},req=ex?sb.from('customers').update(obj).eq('id_cliente',ex.id_cliente):sb.from('customers').insert(obj);req.then(async r=>{if(r.error){toast(r.error.message,false);return}const q=await sb.from('customers').select('*').order('company_name').order('address');state.customers=q.data||[];toast('Cliente guardado');});}
+function clearProductWeb(){if(!confirm('¿Limpiar los datos del producto actual?'))return;state.selectedProduct=null;['#pname','#psku','#record-id','#pqty','#pprice','#pweight','#pheight','#pti','#phi','#ptihi','#pdims','#pbundle','#pverified','#pconfig','#pinsured','#pnota'].forEach(id=>$(id)&&($(id).value=''));$('#prevenue').value='85';$('#prepack').value='Redondear';['#wwe_cost','#wwe_add','#cbcfs_cost','#cbcfs_add','#fedex_cost','#fedex_add','#ups_dv','#ups_sgn','#ups_sm','#ups_add','#uber_cost','#uber_add','#ld_cost1','#ld_cost_extra'].forEach(id=>$(id)&&($(id).value=''));if($('#uber_trucks'))$('#uber_trucks').value='1';document.querySelectorAll('#pallets>div').forEach(x=>x.remove());addPallet();calcPallets();calc();updateRecordId();}
+function clearAllWeb(){if(!confirm('¿Limpiar toda la cotización y vaciar el carrito?'))return;state.cart=[];state.edit=null;state.selectedCustomer=null;state.selectedProduct=null;render();}
+
 function bindView(){if(state.tab==='quote')bindQuote(); if(state.tab==='quotes')bindQuotes(); if(['products','customers','verified_configs','rules'].includes(state.tab))bindCrud(state.tab); if(state.tab==='local')bindLocal(); if(state.tab==='reports')bindReports()}
 function bindQuote(){loadEmail($('#qdate').value);setupCustomerAutocomplete();setupProductAutocomplete();setupServices();setupPallets();['pqty','pprice'].forEach(id=>$('#'+id).addEventListener('input',()=>{insured();checkVerified();applyRules();calcPallets()}));['qtype','qaddress','qcompany'].forEach(id=>$('#'+id).addEventListener('input',()=>{if(id==='qaddress'){$('#ld_address').value=$('#qaddress').value}applyRules()}));$('#prevenue').addEventListener('change',calc);['wwe_cost','wwe_add','cbcfs_cost','cbcfs_add','fedex_cost','fedex_add','uber_cost','uber_add','uber_trucks','ups_dv','ups_sgn','ups_sm','ups_add','ld_cost1','ld_cost_extra','ld_pallets'].forEach(id=>$('#'+id).addEventListener('input',calc));['uber_mode','wwe_trans','cbcfs_trans','uber_trans'].forEach(id=>$('#'+id)?.addEventListener('change',calc));$('#maxheight_carrier').addEventListener('change',()=>{$('#maxheight').value=$('#maxheight_carrier').value;$('#customheight').disabled=!$('#maxheight').value.includes('Personalizada');calcPallets()});$('#maxheight').addEventListener('change',()=>{$('#maxheight_carrier').value=$('#maxheight').value;$('#customheight').disabled=!$('#maxheight').value.includes('Personalizada');calcPallets()});$('#customheight').addEventListener('input',calcPallets);$('#qdate').addEventListener('change',e=>loadEmail(e.target.value));$('#add-cart').onclick=addCart;$('#clear-form').onclick=()=>{state.cart=[];state.edit=null;render()};$('#clear-services').onclick=()=>{$('#selected-services').value=''};$('#save-quote').onclick=saveQuote;$('#update-quote').onclick=saveQuote;renderCart();if(state.edit)hydrateEdit();else{$('#ld_pallets').value='1';$('#ld_cost_extra').value='20';$('#ld_address').value=$('#qaddress').value}calcPallets();calc()}
 async function loadEmail(date){if(!sb)return;const {data,error}=await sb.from('quotes').select('email').eq('date',date);if(error)return;const vals=data.map(x=>parseInt(x.email)).filter(Number.isFinite);$('#qemail').value=String(vals.length?Math.max(...vals)+1:1)}
