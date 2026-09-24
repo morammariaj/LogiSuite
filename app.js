@@ -76,6 +76,21 @@ if(update&&update.parentElement!==bar)bar.querySelector('#save-slot').appendChil
 if(note&&note.parentElement!==bar){note.classList.add('hidden','note-floating');bar.insertBefore(note,bar.querySelector('#toggle-note'));}
 const clearOld=$('#clear-form');if(clearOld)clearOld.classList.add('hidden');
 
+const wire=(id,fn)=>{const el=$('#'+id);if(el)el.onclick=fn};
+wire('database',()=>openDatabase('products'));
+wire('view-quotes',openQuotesModal);
+wire('export',openExportModal);
+wire('reports',openReportsModal);
+wire('save-quote',saveQuote);
+wire('update-quote',saveQuote);
+wire('add-product',addCart);
+wire('clear-product',()=>clearProductWeb());
+wire('clear-all',clearAllWeb);
+wire('toggle-note',()=>{const n=$('#pnota');if(n){n.classList.toggle('hidden');if(!n.classList.contains('hidden'))n.focus();}});
+wire('save-cust',saveCustomerWeb);
+wire('add-services',addSelectedServicesWeb);
+wire('clear-services',()=>$('#selected-services').value='');
+
 const company=$('#qcompany');
 if(company&&!$('#save-cust')){
  const b=document.createElement('button');b.type='button';b.id='save-cust';b.className='icon-btn';b.textContent='💾';b.title='Guardar cliente';company.parentElement?.appendChild(b);
