@@ -1436,3 +1436,77 @@ body.modal-open>.modal{z-index:2060!important}
     flex-direction:row!important;
   }
 }
+
+/* ===== v31: definitive Customer Information alignment ===== */
+.area-customer .customer-grid{
+  display:grid!important;
+  grid-template-columns:minmax(145px,0.9fr) minmax(240px,1.8fr) minmax(300px,3fr)!important;
+  gap:10px!important;
+  align-items:start!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.area-customer .customer-grid>label{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:flex-start!important;
+  min-width:0!important;
+  margin:0!important;
+}
+.area-customer .customer-grid>label>.label{
+  display:block!important;
+  height:18px!important;
+  min-height:18px!important;
+  margin:0 0 6px!important;
+  line-height:18px!important;
+}
+.area-customer .customer-input-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 38px!important;
+  gap:7px!important;
+  align-items:stretch!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+.area-customer .customer-input-row #qcompany{
+  width:100%!important;
+  min-width:0!important;
+  height:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+}
+.area-customer .customer-input-row #save-cust{
+  width:38px!important;
+  min-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:0!important;
+  align-self:stretch!important;
+}
+.area-customer .customer-grid #qtype,
+.area-customer .customer-grid #qaddress{
+  width:100%!important;
+  margin:0!important;
+}
+.area-customer .customer-grid #qtype{
+  height:38px!important;
+  min-height:38px!important;
+}
+.area-customer .customer-grid #qaddress{
+  min-height:74px!important;
+  height:74px!important;
+  resize:vertical!important;
+}
+@media(max-width:900px){
+  .area-customer .customer-grid{
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  .area-customer .customer-grid>label>.label{
+    height:18px!important;
+    min-height:18px!important;
+  }
+}
