@@ -2091,3 +2091,25 @@ body[data-bs-theme=dark] .logi-loading-card{
   .logi-loading-copy strong{font-size:13px!important}
   .logi-loading-copy span{font-size:10px!important}
 }
+
+/* ===== Responsive header / hamburger menu ===== */
+.mobile-menu-toggle{display:none;flex:0 0 auto;width:40px;height:40px;border:1px solid var(--ls-border);border-radius:10px;background:var(--ls-surface);color:var(--ls-text);font-size:22px;line-height:1;cursor:pointer;align-items:center;justify-content:center}
+@media(max-width:1000px){
+  .app-topbar{position:sticky;top:0;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;height:auto;min-height:56px;padding:8px 10px}
+  .mobile-menu-toggle{display:flex}
+  .top-actions{display:none;position:absolute;top:calc(100% + 1px);left:8px;right:8px;z-index:2000;padding:10px;border:1px solid var(--ls-border);border-radius:0 0 14px 14px;background:rgba(255,255,255,.98);box-shadow:0 12px 30px rgba(80,62,130,.16);align-items:stretch;justify-content:stretch;flex-direction:column;gap:7px}
+  .top-actions.mobile-open{display:flex}
+  .top-actions .status-pill{align-self:flex-start}
+  .top-actions .time-widgets{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}
+  .top-actions .time-pill{min-width:0}
+  .top-actions>button,.top-actions>.btn,.top-actions .theme-btn{width:100%;min-height:40px;text-align:center}
+  .top-actions .user-name{display:block;padding:5px 8px}
+}
+@media(max-width:500px){
+  .brand-name{font-size:17px}
+  .mobile-menu-toggle{width:38px;height:38px}
+  .top-actions{left:6px;right:6px;padding:8px}
+  .top-actions .time-widgets{grid-template-columns:1fr}
+}
+body[data-bs-theme=dark] .top-actions{background:#211e28}
+body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;border-color:#493f54}
