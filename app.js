@@ -36,7 +36,9 @@ function formatClock(timeZone){
  const get=t=>parts.find(x=>x.type===t)?.value||'00';
  const hour=Number(get('hour'));
  const period=(get('dayPeriod')||'').toLowerCase();
- return {hour,minute:Number(get('minute')),second:Number(get('second')),text:hour+':'+get('minute')+':'+get('second')+' '+(period==='a. m.'||period==='am'?'AM':'PM')};
+ const isPm=period==='p. m.'||period==='pm';
+ const hour24=hour===12?(isPm?12:0):(isPm?hour+12:hour);
+ return {hour, hour24, minute:Number(get('minute')), second:Number(get('second')), period, text:hour+':'+get('minute')+':'+get('second')+' '+(isPm?'PM':'AM')};
 }
 function updateWorkClocks(){
  const co=formatClock('America/Bogota'),mi=formatClock('America/New_York');
@@ -45,12 +47,15 @@ function updateWorkClocks(){
  if(m)m.textContent=mi.text;
  if(!n)return;
  n.classList.remove('hidden','lunch','finished');
- if(co.hour===12){
+ if(co.hour24>=12&&co.hour24<13){
   n.classList.add('lunch');
   n.textContent='🍽️ Hora de almorzar';
- }else if(mi.hour>=17){
+ }else if(co.hour24>=17){
   n.classList.add('finished');
-  n.textContent='🛑 Jornada terminada · hora de descansar';
+  n.textContent='🛑 Fuera de jornada · hora de descansar';
+ }else if(co.hour24<8){
+  n.classList.add('finished');
+  n.textContent='🛑 Fuera de jornada · aún no inicia la jornada';
  }else{
   n.classList.add('hidden');
   n.textContent='';
