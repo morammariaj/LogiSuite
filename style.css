@@ -985,3 +985,216 @@ body.modal-open>.modal{z-index:2060!important}
   .quote-actions{gap:2px!important}
   .action-bar #save-slot{grid-template-columns:1fr!important}
 }
+
+/* ===== v28: breathing room for DB/View Quotes + exact service action sizing ===== */
+
+/* Every modal gets a comfortable inner "sheet" like a spreadsheet. */
+.modal-body{
+  padding:18px!important;
+}
+.modal-content-panel{
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:0!important;
+  padding:16px 18px 18px!important;
+  border:1px solid var(--ls-border)!important;
+  border-radius:12px!important;
+  background:var(--ls-card)!important;
+  box-shadow:0 2px 10px rgba(80,60,130,.05)!important;
+  overflow:hidden!important;
+}
+.modal-content-panel>.between{
+  width:100%!important;
+  margin:0 0 14px!important;
+  padding:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:14px!important;
+  flex-wrap:wrap!important;
+}
+.modal-content-panel>.between>.section-title{margin:0!important}
+.modal-content-panel>.between>.row{
+  width:auto!important;
+  max-width:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:8px!important;
+  flex-wrap:wrap!important;
+  margin:0!important;
+}
+.modal-content-panel>.between>.row .input,
+.modal-content-panel>.between>.row .select{
+  width:100%!important;
+  min-width:0!important;
+}
+
+/* CRUD: Search + New remain a compact right-side toolbar. */
+.crud-panel>.between>.row{
+  display:grid!important;
+  grid-template-columns:minmax(190px,260px) 110px!important;
+  width:min(378px,100%)!important;
+}
+.crud-panel #crud-q{width:100%!important}
+.crud-panel #crud-new{
+  width:110px!important;
+  min-width:110px!important;
+  margin:0!important;
+}
+
+/* View Quotes: search + from + to + search, all on one responsive toolbar. */
+.quotes-panel>.between>.row{
+  display:grid!important;
+  grid-template-columns:minmax(190px,1.5fr) minmax(140px,1fr) minmax(140px,1fr) 92px!important;
+  width:min(700px,100%)!important;
+}
+.quotes-panel #search-quotes{width:92px!important;min-width:92px!important}
+
+/* DB navigation gets its own breathing room and never touches the panel edge. */
+.modal-body>.db-tabs{
+  margin:0 0 14px!important;
+  padding:2px!important;
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:7px!important;
+}
+.db-tabs .nav-link{
+  padding:8px 13px!important;
+  border-radius:9px!important;
+}
+#db-body{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+}
+#db-body>.modal-content-panel{
+  margin:0!important;
+}
+
+/* Tables: generous cell padding, sane action column, responsive container. */
+.modal-content-panel .scroll-x,
+.modal-content-panel .table-scroll,
+.modal-content-panel .table-responsive-logi{
+  width:100%!important;
+  max-width:100%!important;
+  margin-top:4px!important;
+  border:1px solid var(--ls-border)!important;
+  border-radius:10px!important;
+  overflow-x:auto!important;
+  overflow-y:auto!important;
+  background:var(--ls-card)!important;
+}
+.modal-content-panel .data-table{
+  min-width:680px;
+  width:100%!important;
+}
+.crud-panel .data-table{min-width:900px!important}
+.quotes-panel .data-table{min-width:900px!important}
+.modal-content-panel .data-table th,
+.modal-content-panel .data-table td{
+  padding:9px 10px!important;
+}
+.modal-content-panel .data-table thead th{
+  background:var(--ls-lilac-soft)!important;
+}
+.modal-content-panel .data-table tbody tr:last-child td{border-bottom:0!important}
+.modal-content-panel .data-table td:last-child{
+  white-space:nowrap!important;
+}
+
+/* The Local Delivery search area gets the same layout language. */
+.local-panel>.row{
+  display:grid!important;
+  grid-template-columns:minmax(220px,1fr) 100px!important;
+  gap:8px!important;
+  margin:12px 0!important;
+}
+.local-panel #ldq,.local-panel #ldsearch{width:100%!important;min-width:0!important}
+.local-panel .data-table{min-width:680px!important}
+
+/* Reports uses the same panel rhythm. */
+.report-panel>.grid{
+  gap:10px!important;
+  margin-bottom:12px!important;
+}
+.report-panel>.row{
+  display:flex!important;
+  gap:8px!important;
+  flex-wrap:wrap!important;
+}
+
+/* EXACT SAME GEOMETRY for Clear Box and Add Selected. */
+.service-actions{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:8px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin-top:8px!important;
+}
+.service-actions #clear-services,
+.service-actions #add-services{
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  height:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:8px 14px!important;
+  border-radius:8px!important;
+  line-height:1!important;
+  font-size:13px!important;
+  font-weight:700!important;
+}
+.service-actions #clear-services{
+  background:#ea4335!important;
+  border:1px solid #ea4335!important;
+  color:#fff!important;
+}
+.service-actions #add-services{
+  background:#1f8f3f!important;
+  border:1px solid #1f8f3f!important;
+  color:#fff!important;
+}
+
+/* Save / Update: never touch each other. */
+.action-bar #save-slot{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+.action-bar #save-slot .btn{
+  margin:0!important;
+}
+
+/* Desktop keeps toolbars breathable without increasing modal height. */
+@media(min-width:901px){
+  .modal-body>.db-tabs{padding-left:2px!important;padding-right:2px!important}
+  .modal-content-panel{padding:18px 20px 20px!important}
+}
+
+/* Mobile: stack toolbars, keep the same inset on every tab. */
+@media(max-width:900px){
+  .modal-body{padding:10px!important}
+  .modal-content-panel{padding:12px!important}
+  .modal-content-panel>.between{align-items:stretch!important}
+  .modal-content-panel>.between>.row,
+  .crud-panel>.between>.row,
+  .quotes-panel>.between>.row{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    width:100%!important;
+  }
+  .crud-panel #crud-new,
+  .quotes-panel #search-quotes{
+    width:100%!important;
+    min-width:0!important;
+  }
+  .local-panel>.row{grid-template-columns:1fr!important}
+}
