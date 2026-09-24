@@ -493,7 +493,7 @@
   function dateFilter(r,from,to){const d=dateISO(r.date);return (!from||d>=from)&&(!to||d<=to)}
 
   function filterWidget(id,label){
-    const wrap=document.createElement('div');wrap.className='compat-filter-wrap';wrap.innerHTML=`<span class="label">${label}</span><button type="button" class="btn btn-outline-secondary compat-filter-btn">Optional</button><div class="compat-filter-menu hidden"></div>`;return wrap;
+    const wrap=document.createElement('div');wrap.className='compat-filter-wrap';wrap.innerHTML=`<span class="label">${label}</span><button type="button" class="btn btn-outline-secondary compat-filter-btn" disabled>Todos</button><div class="compat-filter-menu hidden"></div>`;return wrap;
   }
   function selectedFilterValues(wrap){return [...wrap.querySelectorAll('input[type=checkbox]:checked')].map(x=>x.value)}
   function fillFilter(wrap,values,old=[]){
