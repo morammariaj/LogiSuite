@@ -1910,3 +1910,109 @@ body[data-bs-theme=dark] .report-panel .report-status{
     grid-template-columns:1fr!important;
   }
 }
+
+/* ===== v39: live Colombia/Miami clocks + work reminders ===== */
+.time-widgets{
+  display:flex!important;
+  align-items:center!important;
+  gap:5px!important;
+  min-width:0!important;
+}
+.time-pill{
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  padding:5px 8px!important;
+  border:1px solid var(--ls-border)!important;
+  border-radius:9px!important;
+  background:var(--ls-surface)!important;
+  color:var(--ls-text)!important;
+  white-space:nowrap!important;
+  line-height:1.1!important;
+}
+.time-pill span{
+  font-size:9px!important;
+  font-weight:700!important;
+  color:var(--ls-muted)!important;
+}
+.time-pill b{
+  font-size:11px!important;
+  font-variant-numeric:tabular-nums!important;
+  letter-spacing:.02em!important;
+}
+.work-notice{
+  display:inline-flex!important;
+  align-items:center!important;
+  min-height:30px!important;
+  padding:5px 9px!important;
+  border-radius:9px!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  white-space:nowrap!important;
+  border:1px solid transparent!important;
+}
+.work-notice.lunch{
+  background:#fff4d6!important;
+  color:#8a5b00!important;
+  border-color:#f2d27a!important;
+}
+.work-notice.finished{
+  background:#fde7e7!important;
+  color:#b42318!important;
+  border-color:#efb2b2!important;
+}
+body[data-bs-theme=dark] .time-pill{
+  background:#1b1821!important;
+  border-color:#40384a!important;
+}
+body[data-bs-theme=dark] .time-pill span{
+  color:#b8afc4!important;
+}
+body[data-bs-theme=dark] .work-notice.lunch{
+  background:#3a3019!important;
+  color:#f4d47b!important;
+  border-color:#65552a!important;
+}
+body[data-bs-theme=dark] .work-notice.finished{
+  background:#3a1f22!important;
+  color:#ffaca6!important;
+  border-color:#6a3438!important;
+}
+@media(max-width:1200px){
+  .time-pill span{display:none!important}
+  .time-pill{padding:6px 8px!important}
+}
+@media(max-width:900px){
+  .app-topbar{
+    height:auto!important;
+    min-height:56px!important;
+    flex-wrap:wrap!important;
+    row-gap:6px!important;
+  }
+  .top-actions{
+    flex-wrap:wrap!important;
+    justify-content:flex-end!important;
+  }
+  .time-widgets{
+    order:0!important;
+    flex:1 1 100%!important;
+    justify-content:flex-end!important;
+  }
+  .work-notice{
+    flex:0 0 auto!important;
+  }
+}
+@media(max-width:520px){
+  .time-widgets{
+    justify-content:stretch!important;
+    width:100%!important;
+  }
+  .time-pill{
+    flex:1 1 0!important;
+    justify-content:space-between!important;
+  }
+  .work-notice{
+    flex:1 1 100%!important;
+    justify-content:center!important;
+  }
+}
