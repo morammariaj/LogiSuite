@@ -788,3 +788,200 @@ body.modal-open>.modal{z-index:2060!important}
   .area-cubic .pallet-action-row{grid-template-columns:1fr 1fr 60px 42px!important}
   .area-cubic .pallet-bulk-row{grid-template-columns:1fr 95px!important}
 }
+
+/* ===== v27: tables, modal spacing, action icons, exact service buttons ===== */
+.modal-xl{--bs-modal-width:min(1240px,calc(100vw - 28px))!important}
+.modal-dialog{margin:12px auto!important}
+.modal-content{border-radius:18px!important}
+.modal-header{padding:16px 18px!important}
+.modal-body{padding:16px 18px!important}
+.modal-body>.card{padding:0!important;margin:0!important;border:0!important;box-shadow:none!important;background:transparent!important}
+
+.modal-body .between,
+.modal-body .panel-toolbar{gap:12px!important}
+.modal-body .card+.card,
+.modal-body .panel+.panel{margin-top:10px!important}
+.modal-body .label{margin-bottom:6px!important}
+.modal-body .input,.modal-body .select,.modal-body .textarea{margin-bottom:0!important}
+
+/* Search/header areas in DB and View Quotes */
+.modal-body>.card>.between{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+  flex-wrap:wrap!important;
+  margin-bottom:12px!important;
+}
+.modal-body>.card>.between .row{
+  display:grid!important;
+  grid-template-columns:minmax(180px,260px) auto!important;
+  gap:8px!important;
+  align-items:center!important;
+}
+#vq,.modal-body #crud-q{width:100%!important;min-width:0!important}
+#vf,#vt{min-width:145px!important}
+#search-quotes{min-width:92px!important}
+
+/* Generic table container: only the table scrolls, never the entire modal. */
+.scroll-x,.table-scroll,.table-responsive-logi,#crud-table,#quotes-table,#report-table,#export-table,#ldtable{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  overflow-x:auto!important;
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch;
+}
+.data-table{
+  width:100%!important;
+  max-width:100%!important;
+  margin:0!important;
+  border-collapse:separate!important;
+  border-spacing:0!important;
+}
+.data-table th,.data-table td{
+  padding:8px 9px!important;
+  vertical-align:middle!important;
+  line-height:1.25!important;
+}
+.data-table thead th{
+  white-space:nowrap!important;
+  font-size:10px!important;
+}
+.data-table tbody td{
+  font-size:11px!important;
+}
+.data-table th:last-child,.data-table td:last-child{
+  text-align:center!important;
+}
+.icon-action{
+  width:34px!important;
+  min-width:34px!important;
+  height:34px!important;
+  padding:0!important;
+  display:inline-grid!important;
+  place-items:center!important;
+  margin:0 2px!important;
+  border-radius:8px!important;
+  font-size:16px!important;
+  line-height:1!important;
+}
+.quote-actions{
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+  gap:4px!important;
+  white-space:nowrap!important;
+}
+.quote-actions .icon-action{margin:0!important}
+
+/* CRUD table action cell never wraps into three tall lines. */
+#crud-table td:last-child{white-space:nowrap!important;width:1%!important}
+#crud-table td:last-child .icon-action{margin:1px!important}
+
+/* CRUD editor */
+.crud-form-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;
+}
+.crud-form-grid label{min-width:0!important}
+.crud-form-grid .label{text-transform:none!important}
+.panel-actions{
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  gap:8px!important;
+  flex-wrap:wrap!important;
+  margin-top:12px!important;
+}
+.panel-actions .btn{min-width:120px!important}
+.ficha-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;
+}
+.ficha-item{
+  min-width:0!important;
+  padding:9px 10px!important;
+  border:1px solid var(--ls-border)!important;
+  border-radius:10px!important;
+  background:var(--ls-surface)!important;
+}
+.ficha-value{
+  min-height:31px!important;
+  margin-top:5px!important;
+  padding:7px 8px!important;
+  border:1px solid var(--ls-border)!important;
+  border-radius:8px!important;
+  background:var(--ls-card)!important;
+  white-space:pre-wrap!important;
+  overflow-wrap:anywhere!important;
+}
+.modal-summary{
+  margin-bottom:12px!important;
+  padding:10px 12px!important;
+  border:1px solid var(--ls-border)!important;
+  border-radius:10px!important;
+  background:var(--ls-surface)!important;
+}
+
+/* Exact visual parity for Clear Box / Add Selected. */
+.area-carriers .embedded-service #clear-services,
+.area-carriers .embedded-service #add-services{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:38px!important;
+  min-height:38px!important;
+  margin:8px 0 0!important;
+  padding:7px 14px!important;
+  border-radius:8px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:13px!important;
+  font-weight:700!important;
+  line-height:1!important;
+}
+
+/* Bottom save/update actions need breathing room. */
+.action-bar #save-slot{
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  flex:0 0 auto!important;
+}
+.action-bar #save-slot .btn{
+  margin:0!important;
+  min-width:150px!important;
+}
+.action-bar{
+  gap:8px!important;
+  padding-top:4px!important;
+  padding-bottom:4px!important;
+}
+.action-bar .action-spacer{flex:1 1 auto!important;min-width:8px!important}
+
+@media(max-width:900px){
+  .modal-xl{--bs-modal-width:calc(100vw - 16px)!important}
+  .modal-dialog{margin:8px auto!important}
+  .modal-body{padding:12px!important}
+  .crud-form-grid,.ficha-grid{grid-template-columns:1fr!important}
+  .modal-body>.card>.between .row{
+    grid-template-columns:1fr!important;
+    width:100%!important;
+  }
+  #vf,#vt,#vq,#search-quotes{width:100%!important;min-width:0!important}
+  .action-bar #save-slot{display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important}
+  .action-bar #save-slot .btn{min-width:0!important;width:100%!important}
+}
+@media(max-width:520px){
+  .data-table th,.data-table td{padding:7px 6px!important}
+  .data-table tbody td{font-size:10px!important}
+  .icon-action{width:32px!important;min-width:32px!important;height:32px!important;font-size:15px!important}
+  .quote-actions{gap:2px!important}
+  .action-bar #save-slot{grid-template-columns:1fr!important}
+}
