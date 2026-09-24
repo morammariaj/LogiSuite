@@ -30,7 +30,7 @@ function hideLoading(){
  const o=document.getElementById('logi-loading');
  if(o)o.classList.remove('show');
 }
-function appShell(){return '<div class="app-shell"><header class="app-topbar"><div class="brand-wrap"><img src="icon-192-lilac.svg" class="brand-icon" alt="LogiSuite"><div><div class="brand-name">LogiSuite</div><div class="brand-sub">Cotizador y gestión logística · v55</div></div></div><div class="top-actions"><span class="status-pill '+(state.online?'online':'offline')+'"><i></i>'+(state.online?'Online':'Offline')+'</span><div class="time-widgets" aria-label="Relojes de trabajo"><div class="time-pill"><span>🇨🇴 Colombia</span><b id="clock-colombia">--:--:--</b></div><div class="time-pill"><span>🇺🇸 Miami</span><b id="clock-miami">--:--:--</b></div><span id="work-notice" class="work-notice hidden"></span></div><button type="button" class="btn btn-sm btn-outline-success" id="backup-local-db" title="Descargar las tres bases SQLite listas para reemplazar el sistema local">💾 DB Local</button><button class="btn btn-sm theme-btn" id="theme">'+(state.dark?'☀️ Claro':'🌙 Oscuro')+'</button><button class="btn btn-sm btn-outline-secondary" id="change-password">Cambiar contraseña</button><span class="user-name">'+esc(state.session?.user_metadata?.display_name||'María José')+'</span><button class="btn btn-sm btn-outline-secondary" id="logout">Cerrar sesión</button></div></header><main class="app-main"><div id="view"></div></main></div>';}
+function appShell(){return '<div class="app-shell"><header class="app-topbar"><div class="brand-wrap"><img src="icon-192-lilac.svg" class="brand-icon" alt="LogiSuite"><div><div class="brand-name">LogiSuite</div><div class="brand-sub">Cotizador y gestión logística · v56</div></div></div><div class="top-actions"><span class="status-pill '+(state.online?'online':'offline')+'"><i></i>'+(state.online?'Online':'Offline')+'</span><div class="time-widgets" aria-label="Relojes de trabajo"><div class="time-pill"><span>🇨🇴 Colombia</span><b id="clock-colombia">--:--:--</b></div><div class="time-pill"><span>🇺🇸 Miami</span><b id="clock-miami">--:--:--</b></div><span id="work-notice" class="work-notice hidden"></span></div><button type="button" class="btn btn-sm btn-outline-success" id="backup-local-db" title="Descargar las tres bases SQLite listas para reemplazar el sistema local">💾 DB Local</button><button class="btn btn-sm theme-btn" id="theme">'+(state.dark?'☀️ Claro':'🌙 Oscuro')+'</button><button class="btn btn-sm btn-outline-secondary" id="change-password">Cambiar contraseña</button><span class="user-name">'+esc(state.session?.user_metadata?.display_name||'María José')+'</span><button class="btn btn-sm btn-outline-secondary" id="logout">Cerrar sesión</button></div></header><main class="app-main"><div id="view"></div></main></div>';}
 function formatClock(timeZone){
  const parts=new Intl.DateTimeFormat('es-CO',{timeZone,hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true}).formatToParts(new Date());
  const get=t=>parts.find(x=>x.type===t)?.value||'00';
@@ -116,24 +116,49 @@ function waitForLoadingElement(selector,message='Cargando información…',timeo
 }
 function openDatabase(tab){
  const names={products:'Productos',customers:'Clientes',verified_configs:'Verificados',rules:'Reglas',local:'Local Delivery',reports:'Reportes',quotes:'DataBase Quotes'};
- const tabs=Object.keys(names).map(k=>'<button type="button" class="nav-link '+(tab===k?'active':'')+'" data-db-tab="'+k+'">'+names[k]+'</button>').join('');
+ const safeTab=names[tab]?tab:'products';
+ const tabs=Object.keys(names).map(k=>'<button type="button" class="nav-link '+(safeTab===k?'active':'')+'" data-db-tab="'+k+'">'+names[k]+'</button>').join('');
  const body='<div class="nav nav-pills gap-2 mb-3 db-tabs">'+tabs+'</div><div id="db-body"><div class="muted" style="padding:18px;text-align:center">Cargando…</div></div>';
- let mounted=false;
- const mount=async()=>{
-  if(mounted)return;mounted=true;
-  document.querySelectorAll('[data-db-tab]').forEach(b=>b.onclick=()=>{bootstrap.Modal.getInstance($('#dbModal'))?.hide();setTimeout(()=>openDatabase(b.dataset.dbTab),180)});
+ let started=false,current=safeTab,seq=0;
+ const loadTab=async(k)=>{
+  if(!names[k])k='products';
+  current=k;
+  const mySeq=++seq;
+  document.querySelectorAll('[data-db-tab]').forEach(b=>b.classList.toggle('active',b.dataset.dbTab===k));
   const box=$('#db-body');if(!box)return;
+  const label=names[k]||k;
+  box.innerHTML='<div class="muted" style="padding:24px;text-align:center"><strong>Cargando '+esc(label)+'…</strong><br><span style="font-size:12px;opacity:.75">Consultando la base de datos.</span></div>';
   try{
-   if(tab==='local'){box.innerHTML=localView();if(typeof window.bindLocal==='function')await window.bindLocal();else await bindLocal()}
-   else if(tab==='reports'){box.innerHTML=(typeof window.reportViewHtml==='function'?window.reportViewHtml():reportsView());if(typeof window.bindReports==='function')await window.bindReports();else await bindReports()}
-   else if(tab==='quotes'){box.innerHTML=(typeof window.quotesView==='function'?window.quotesView():quotesView());if(typeof window.bindQuotes==='function')await window.bindQuotes();else await bindQuotes()}
-   else{box.innerHTML=crudView(tab);if(typeof window.bindCrud==='function')await window.bindCrud(tab);else await bindCrud(tab)}
-  }catch(e){console.error('Data Base tab error',e);box.innerHTML='<div class="alert alert-danger"><b>No se pudo cargar esta sección.</b><br>'+esc(e.message||e)+'</div>';toast('No se pudo cargar Data Base: '+(e.message||e),false)}
+   if(k==='local'){
+    box.innerHTML=typeof window.localView==='function'?window.localView():localView();
+    if(typeof window.bindLocal==='function')await window.bindLocal();else await bindLocal();
+   }else if(k==='reports'){
+    box.innerHTML=typeof window.reportViewHtml==='function'?window.reportViewHtml():(typeof window.reportsView==='function'?window.reportsView():reportsView());
+    if(typeof window.bindReports==='function')await window.bindReports();else await bindReports();
+   }else if(k==='quotes'){
+    box.innerHTML=typeof window.quotesView==='function'?window.quotesView():quotesView();
+    if(typeof window.bindQuotes==='function')await window.bindQuotes();else await bindQuotes();
+   }else{
+    box.innerHTML=crudView(k);
+    if(typeof window.bindCrud==='function')await window.bindCrud(k);else await bindCrud(k);
+   }
+  }catch(e){
+   if(mySeq!==seq)return;
+   console.error('Data Base tab error',k,e);
+   box.innerHTML='<div class="alert alert-danger"><b>No se pudo cargar '+esc(label)+'.</b><br><span>'+esc(e?.message||e)+'</span><div style="margin-top:10px;font-size:12px">Puedes cambiar de pestaña y volver a intentarlo.</div></div>';
+   toast('No se pudo cargar '+label+': '+(e?.message||e),false);
+  }
  };
- openBootstrapModal('dbModal','Data Base',body,()=>mount());
- // Populate immediately after the modal DOM is created; the shown event is only a fallback.
- Promise.resolve(mount()).catch(e=>{console.error('Data Base immediate mount error',e)});
-}function openReportsModal(){openBootstrapModal('reportsModal','Reportes',reportsView(),()=>bindReports());}
+ const start=()=>{
+  if(started)return;
+  started=true;
+  document.querySelectorAll('[data-db-tab]').forEach(b=>b.onclick=()=>loadTab(b.dataset.dbTab));
+  loadTab(current).catch(e=>console.error('Data Base start error',e));
+ };
+ openBootstrapModal('dbModal','Data Base',body,start);
+ start();
+}
+function openReportsModal(){openBootstrapModal('reportsModal','Reportes',reportsView(),()=>bindReports());}
 function openQuotesModal(){openBootstrapModal('quotesModal','View Quotes',quotesView(),()=>bindQuotes());}
 function openExportModal(){const body='<div class="row g-3"><div class="col-md-3"><label class="label">Desde</label><input id="rf2" class="form-control" type="date"></div><div class="col-md-3"><label class="label">Hasta</label><input id="rt2" class="form-control" type="date"></div><div class="col-md-3"><label class="label">Quote</label><input id="rq2" class="form-control"></div><div class="col-md-3"><label class="label">Producto</label><input id="rp2" class="form-control"></div></div><div class="d-flex flex-wrap gap-2 mt-3"><button type="button" class="btn btn-primary" id="export-preview">Vista previa</button><button type="button" class="btn btn-primary" id="export-print">Imprimir / PDF</button><button type="button" class="btn btn-success" id="export-xlsx">📊 Excel</button><button type="button" class="btn btn-outline-primary" id="export-csv">CSV</button></div><div id="export-table" class="table-scroll mt-3"></div>';openBootstrapModal('exportModal','Exportar reportes',body,()=>{const load=async()=>{let rows=[...(await fetchAllRows('quotes','*')),...(await fetchAllRows('local_quotes','*'))];const q=norm($('#rq2').value),p=norm($('#rp2').value),f=$('#rf2').value,t=$('#rt2').value;if(q)rows=rows.filter(x=>norm(x.quote).includes(q));if(p)rows=rows.filter(x=>norm(x.product).includes(p));if(f||t)rows=rows.filter(x=>{const z=String(x.date||'').split('/'),iso=z.length===3?z[2]+'-'+z[1]+'-'+z[0]:x.date;return(!f||iso>=f)&&(!t||iso<=t)});rows.sort((a,b)=>{const key=x=>{const z=String(x||'').split('/');return z.length===3?z[2]+z[1]+z[0]:String(x||'')};return key(b.date).localeCompare(key(a.date))||String(b.quote||'').localeCompare(String(a.quote||''))});$('#export-table').innerHTML='<table class="table table-sm align-middle"><thead><tr><th>DATE</th><th>QUOTE</th><th>COMPANY</th><th>PRODUCT</th><th>QTY</th><th>PLATFORM</th><th>PRICE</th><th>TYPE</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.quote)+'</td><td>'+esc(x.company_name)+'</td><td>'+esc(x.product)+'</td><td>'+x.qty+'</td><td>'+esc(x.better_platform)+'</td><td>$'+num(x.better_shipping_price).toFixed(2)+'</td><td>'+esc(x.type)+'</td></tr>').join('')+'</tbody></table>';return rows};$('#export-preview').onclick=load;$('#export-print').onclick=async()=>{const rows=await load();if(!rows.length)return;const w=window.open('','_blank');if(!w){toast('Ventana de impresión bloqueada',false);return}w.document.write('<html><head><title>LogiSuite Reporte</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#eee}</style></head><body><h2>LogiSuite - Reporte</h2>'+$('#export-table').innerHTML+'</body></html>');w.document.close();w.focus();w.print()};$('#export-xlsx').onclick=async()=>{const rows=await load();if(!rows.length)return;if(!window.XLSX){toast('La librería de Excel no está disponible. Usa CSV.',false);return}const data=rows.map(x=>({DATE:x.date,QUOTE:x.quote,COMPANY:x.company_name,ADDRESS:x.address,TYPE:x.type,SKU:x.sku,PRODUCT:x.product,QTY:x.qty,PRICE_PER_CASE:x.price_per_case,REVENUE:x.revenue,BETTER_PLATFORM:x.better_platform,BETTER_COST:x.better_cost,BETTER_SHIPPING_PRICE:x.better_shipping_price,SERVICES:x.services,NOTA:x.nota}));const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(data);ws['!cols']=[{wch:12},{wch:12},{wch:24},{wch:42},{wch:16},{wch:18},{wch:32},{wch:8},{wch:14},{wch:10},{wch:24},{wch:14},{wch:20},{wch:35},{wch:35}];XLSX.utils.book_append_sheet(wb,ws,'LogiSuite');const out=XLSX.write(wb,{bookType:'xlsx',type:'array'}),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='LogiSuite_Report.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('Excel descargado')};$('#export-csv').onclick=async()=>{const rows=await load();if(!rows.length)return;const cols=['date','quote','company_name','product','qty','better_platform','better_shipping_price','type'];const csv=[cols.join(','),...rows.map(x=>cols.map(k=>'"'+String(x[k]??'').replaceAll('"','""')+'"').join(','))].join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='LogiSuite_Report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('CSV descargado')};});}
 function arrangeLocalLayout(){
@@ -581,6 +606,6 @@ async function installApp(){
   document.getElementById('install-invite')?.remove();
 }
 function showChangePassword(){const m=document.createElement('div');m.className='modal-back';m.innerHTML=`<div class="modal" style="max-width:430px"><div class="between"><h2>Cambiar contraseña</h2><button class="btn secondary close">Cerrar</button></div><label><span class="label">Nueva contraseña</span><input id="cp1" class="input" type="password"></label><label style="display:block;margin-top:10px"><span class="label">Repetir contraseña</span><input id="cp2" class="input" type="password"></label><div id="cpm" class="muted" style="margin:10px 0"></div><button class="btn success" id="cps">Guardar</button></div>`;document.body.appendChild(m);m.querySelector('.close').onclick=()=>m.remove();m.querySelector('#cps').onclick=async()=>{const a=m.querySelector('#cp1').value,b=m.querySelector('#cp2').value;if(a!==b){m.querySelector('#cpm').textContent='Las contraseñas no coinciden';return}const {error}=await sb.auth.updateUser({password:a});m.querySelector('#cpm').textContent=error?error.message:'Contraseña actualizada';if(!error)setTimeout(()=>m.remove(),900)}}
-async function init(){setupInstallInvite();if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw-fresh-55.js?v=55').catch(()=>{});if(!sb){login();return}const {data}=await sb.auth.getSession();if(data.session)start(data.session);else login();sb.auth.onAuthStateChange((e,s)=>{if(e==='SIGNED_OUT')login();if(e==='PASSWORD_RECOVERY')showReset()});if(location.hash==='#reset')showReset()}
+async function init(){setupInstallInvite();if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw-fresh-56.js?v=56').catch(()=>{});if(!sb){login();return}const {data}=await sb.auth.getSession();if(data.session)start(data.session);else login();sb.auth.onAuthStateChange((e,s)=>{if(e==='SIGNED_OUT')login();if(e==='PASSWORD_RECOVERY')showReset()});if(location.hash==='#reset')showReset()}
 function showReset(){const m=document.createElement('div');m.className='modal-back';m.innerHTML=`<div class="modal" style="max-width:420px"><h2>Cambiar contraseña</h2><label><span class="label">Nueva contraseña</span><input id="np" class="input" type="password"></label><label style="display:block;margin-top:10px"><span class="label">Repetir contraseña</span><input id="np2" class="input" type="password"></label><div id="nm" class="muted" style="margin:10px 0"></div><button class="btn success" id="nps">Guardar</button></div>`;document.body.appendChild(m);m.querySelector('#nps').onclick=async()=>{if($('#np').value!==$('#np2').value){$('#nm').textContent='Las contraseñas no coinciden';return}const {error}=await sb.auth.updateUser({password:$('#np').value});$('#nm').textContent=error?error.message:'Contraseña actualizada correctamente';if(!error)setTimeout(()=>m.remove(),1000)}}
 init();
