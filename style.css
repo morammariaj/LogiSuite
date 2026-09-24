@@ -108,3 +108,35 @@ input,select,textarea,.input,.select,.textarea,.form-control,.form-select{width:
 .action-bar #save-slot .btn{display:inline-flex!important}
 @media(max-width:1100px){.area-cubic>.grid.g4:first-of-type{grid-template-columns:1.4fr 1fr auto auto!important}}
 @media(max-width:760px){.area-cubic>.grid.g4:first-of-type{grid-template-columns:1fr!important;align-items:stretch!important}.area-cubic>.grid.g4:first-of-type>.row{width:100%!important}.area-cubic>.grid.g4:first-of-type>.row .btn{flex:1!important}.area-cubic>.grid.g4:first-of-type>.pill{justify-self:start!important}.action-bar{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}.action-bar .action-spacer{display:none!important}.action-bar #save-slot{width:100%!important}.action-bar #save-slot .btn{width:100%!important}}
+
+/* ===== Final cubic controls / action bar organization ===== */
+.cubic-top-hidden{display:none!important}
+.legacy-cubic-header{display:none!important}
+.cubic-head-final{display:grid;grid-template-columns:24px repeat(7,minmax(0,1fr));gap:8px;align-items:end;margin-top:7px;padding:0 7px 4px;font-size:10px;font-weight:800;color:var(--ls-muted);text-align:center}
+.cubic-controls-final{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:9px;padding:8px;border:1px solid var(--ls-border);border-radius:10px;background:var(--ls-surface)}
+.cubic-row-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.cubic-row-tools .btn{width:auto!important;min-width:42px;min-height:34px;padding:6px 10px}
+.bulk-input{width:70px!important;min-width:70px!important;text-align:center}
+.bulk-sep{color:var(--ls-border);font-weight:900}
+.grand-total-final{display:flex;align-items:center;gap:7px}
+.grand-total-final .label{margin:0}
+.grand-total-final #grandtotal{width:120px!important;min-width:120px!important}
+#pallet-add-slot,#pallet-remove-slot{display:inline-flex}
+#pallet-add-slot .btn,#pallet-remove-slot .btn{width:auto!important}
+#pallets{overflow-x:auto!important;overflow-y:visible!important}
+.action-bar{width:100%;min-width:0}
+.action-bar .action-spacer{flex:1 1 auto}
+.action-bar>#save-quote,.action-bar>#update-quote{order:2}
+.action-bar>#view-quotes{order:3}
+.action-bar>#export{order:4}
+.action-bar>#toggle-note{order:5}
+.action-bar>#add-product{order:6}
+.action-bar>#clear-product{order:7}
+.action-bar>#clear-all{order:8}
+@media(max-width:760px){
+ .cubic-controls-final{display:block}
+ .cubic-row-tools{width:100%}
+ .grand-total-final{margin-top:8px;justify-content:flex-start}
+ .grand-total-final #grandtotal{width:140px!important}
+ .cubic-head-final{min-width:720px}
+}
