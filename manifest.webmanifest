@@ -1,1 +1,15 @@
-{"name":"LogiSuite","short_name":"LogiSuite","start_url":"./","display":"standalone","background_color":"#f4f7fb","theme_color":"#1a73e8","icons":[]}
+{
+  "name":"LogiSuite",
+  "short_name":"LogiSuite",
+  "description":"Gestión y cotización logística.",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "orientation":"any",
+  "background_color":"#f4f7fb",
+  "theme_color":"#0b5de8",
+  "icons":[
+    {"src":"icon-192.svg","sizes":"192x192","type":"image/svg+xml","purpose":"any maskable"},
+    {"src":"icon-512.svg","sizes":"512x512","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
