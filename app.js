@@ -65,13 +65,14 @@ document.addEventListener('click',e=>{
  const b=e.target.closest('button');
  if(!b)return;
  const id=b.id;
- if(!['database','save-quote','update-quote','view-quotes','export','toggle-note','add-product','clear-product','clear-all'].includes(id))return;
+ if(!['database','save-quote','update-quote','view-quotes','export','reports','toggle-note','add-product','clear-product','clear-all'].includes(id))return;
  e.preventDefault();e.stopPropagation();
  if(id==='database')return openDatabase('products');
  if(id==='save-quote')return saveQuote();
  if(id==='update-quote')return saveQuote();
  if(id==='view-quotes')return openQuotesModal();
  if(id==='export')return openExportModal();
+ if(id==='reports')return openReportsModal();
  if(id==='toggle-note'){const n=document.querySelector('#pnota');if(n){n.classList.toggle('hidden');if(!n.classList.contains('hidden'))n.focus()}return}
  if(id==='add-product')return addCart();
  if(id==='clear-product')return clearProductWeb();
