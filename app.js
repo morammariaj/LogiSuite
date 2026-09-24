@@ -20,77 +20,53 @@ function quoteView(){const d=new Date();const ds=`${String(d.getDate()).padStart
 <div class="card"><h2 class="section-title">5. Carrier Costs & Pricing</h2><div class="carrier-grid">${carrierCard('WWE',['wwe_cost','wwe_add'],'WWE')}${carrierCard('CBCFS',['cbcfs_cost','cbcfs_add'],'CBCFS')}${carrierCard('UPS',['ups_dv','ups_sgn','ups_sm','ups_add'],'UPS')}${carrierCard('FedEx',['fedex_cost','fedex_add'],'FedEx')}${carrierCard('Uber Freight',['uber_cost','uber_add','uber_trucks'],'Uber Freight')}${carrierCard('LOCAL DELIVERY',['ld_cost1','ld_cost_extra','ld_pallets'],'LOCAL DELIVERY')}</div><div id="winner" class="winner" style="margin-top:12px">Ninguna - Faltan Costos</div></div>
 <div class="card"><h2 class="section-title">6. Services</h2><input id="srv-search" class="input" placeholder="Search service"><div id="services" class="row" style="margin:10px 0;max-height:150px;overflow:auto"></div><textarea id="selected-services" class="textarea" placeholder="Selected services"></textarea><div class="row" style="margin-top:10px"><button class="btn secondary" id="clear-services">Clear Box</button><button class="btn success" id="save-quote">Guardar cotización</button><button class="btn primary hidden" id="update-quote">Actualizar cotización</button><button class="btn danger" id="clear-form">Limpiar todo</button></div></div>
 <div class="card"><h2 class="section-title">Productos en esta Cotización</h2><div class="scroll-x"><table class="data-table" id="cart-table"><thead><tr><th>Producto</th><th>SKU</th><th>Qty</th><th>Price</th><th>Revenue</th><th>Winner</th><th></th></tr></thead><tbody></tbody></table></div><button class="btn secondary" id="add-cart" style="margin-top:10px">Agregar producto al quote</button></div>`}
-function carrierCard(title,fields,kind){const id=kind.replace(/\W/g,'');let extra='';if(kind==='WWE'||kind==='CBCFS'){extra=`<label style="display:block;margin-top:8px"><span class="label">TRANSPORT</span><select id="${kind.toLowerCase()}_trans" class="select">${carriers.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`}if(kind==='Uber Freight'){extra=`<label style="display:block;margin-top:8px"><span class="label">MODO</span><select id="uber_mode" class="select"><option>TL</option><option>LTL</option></select></label><label style="display:block;margin-top:8px"><span class="label">TRANSPORT</span><select id="uber_trans" class="select">${carriers.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label>`}if(kind==='LOCAL DELIVERY'){extra=`<label style="display:block;margin-top:8px"><span class="label">LÍMITE ALTURA</span><select id="maxheight_carrier" class="select"><option>Altura Máxima: 90"</option><option>Altura Máxima: 41"</option><option>Altura Máxima: Personalizada</option></select></label><label style="display:block;margin-top:8px"><span class="label">DESTINO</span><input id="ld_address" class="input" readonly></label>`}return `<div class="carrier" id="card-${id}"><div class="between"><b>${title}</b><span class="pill" id="ship-${id}">$0.00</span></div>${extra}${fields.map(f=>`<label style="display:block;margin-top:8px"><span class="label">${f.replace(/_/g,' ').toUpperCase()}</span><input id="${f}" class="input" type="number" step="0.01"></label>`).join('')}<div class="muted" id="exact-${id}">Exact: $0.00</div></div>`}
+function carrierCard(title,fields,kind){
+const id=kind.replace(/\\W/g,'');const o=()=>carriers.map(x=>`<option>${esc(x)}</option>`).join('');
+if(kind==='WWE'||kind==='CBCFS'){const pre=kind.toLowerCase();return '<div class="carrier" id="card-'+id+'"><div class="between"><b>'+title+'</b><span class="ship-pill" id="ship-'+id+'">$0.00</span></div><label><span class="label">Transport</span><select id="'+pre+'_trans" class="select">'+o()+'</select></label><label id="'+pre+'_trans_other_wrap" class="hidden"><span class="label">Specify</span><input id="'+pre+'_trans_other" class="input"></label><div class="grid g2"><label><span class="label">COST</span><input id="'+pre+'_cost" class="input" type="number" step="0.01"></label><label><span class="label">'+(kind==='CBCFS'?'Añadir $CBCFS':'Additional')+'</span><input id="'+pre+'_add" class="input" type="number" step="0.01"></label></div><div class="exact" id="exact-'+id+'">Exact: $0.00</div>'+(kind==='CBCFS'?'<div class="alert-text hidden" id="cbcfs-alert"></div>':'')+'</div>'}
+if(kind==='FedEx')return '<div class="carrier" id="card-'+id+'"><div class="between"><b>FedEx</b><span class="ship-pill" id="ship-FedEx">$0.00</span></div><div class="grid g2"><label><span class="label">COST</span><input id="fedex_cost" class="input" type="number" step="0.01"></label><label><span class="label">Añadir $FedEx</span><input id="fedex_add" class="input" type="number" step="0.01"></label></div><div class="exact" id="exact-FedEx">Exact: $0.00</div></div>';
+if(kind==='UPS')return '<div class="carrier" id="card-UPS"><div class="between"><b>UPS</b><span class="ship-pill" id="ship-UPS">$0.00</span></div><label><span class="label">COST</span><input id="ups_cost" class="input result" readonly></label><div class="ups-grid"><label><span class="label">D.V x CASE</span><input id="ups_dv" class="input" type="number" step="0.01"></label><output id="ups_tot_dv" class="input result">$0.00</output><label><span class="label">SGN x CASE</span><input id="ups_sgn" class="input" type="number" step="0.01"></label><output id="ups_tot_sgn" class="input result">$0.00</output><label><span class="label">SMALL PK x CS</span><input id="ups_sm" class="input" type="number" step="0.01"></label><output id="ups_tot_sm" class="input result">$0.00</output><label><span class="label">ADD UPS</span><input id="ups_add" class="input" type="number" step="0.01"></label><output id="ups_tot_add" class="input result">$0.00</output></div><div class="exact" id="exact-UPS">Exact: $0.00</div></div>';
+if(kind==='Uber Freight')return '<div class="carrier" id="card-UberFreight"><div class="between"><b>Uber Freight</b><span class="ship-pill" id="ship-UberFreight">$0.00</span></div><label><span class="label">Modo</span><select id="uber_mode" class="select"><option>TL</option><option>LTL</option></select></label><label id="uber_trans_wrap" class="hidden"><span class="label">Transport</span><select id="uber_trans" class="select">'+o()+'</select></label><label id="uber_trans_other_wrap" class="hidden"><span class="label">Specify</span><input id="uber_trans_other" class="input"></label><label id="uber_trucks_wrap"><span class="label"># Trucks</span><input id="uber_trucks" class="input" type="number" min="1" step="1" value="1"></label><div class="grid g2"><label><span class="label">COST</span><input id="uber_cost" class="input" type="number" step="0.01"></label><label><span class="label">Añadir $UBER</span><input id="uber_add" class="input" type="number" step="0.01"></label></div><div class="exact" id="exact-UberFreight">Exact: $0.00</div></div>';
+if(kind==='LOCAL DELIVERY')return '<div class="carrier" id="card-LOCALDELIVERY"><div class="between"><b>🚚 LOCAL DELIVERY (Hialeah/Miami/Broward)</b><span class="ship-pill" id="ship-LOCALDELIVERY">$0.00</span></div><div class="grid g2"><label><span class="label">Límite Altura</span><select id="maxheight_carrier" class="select"><option>Altura Máxima: 90"</option><option>Altura Máxima: 41"</option><option>Altura Máxima: Personalizada</option></select></label><label id="customheight_carrier_wrap" class="hidden"><span class="label">Altura personalizada</span><input id="customheight_carrier" class="input" type="number" step="0.01"></label></div><label><span class="label">Destino</span><input id="ld_address" class="input" readonly></label><div class="grid g3 ld-grid"><label><span class="label"># Pallets Req</span><input id="ld_pallets" class="input result" value="1" readonly></label><label><span class="label">1er Pallet ($)</span><input id="ld_cost1" class="input" type="number" step="0.01"></label><label><span class="label">Extra ($)</span><input id="ld_cost_extra" class="input" type="number" step="0.01" value="20"></label></div><div class="exact" id="exact-LOCALDELIVERY">Cost: $0.00 / SP $0.00</div></div>';
+return '<div class="carrier" id="card-'+id+'">'+fields.map(f=>'<label><span class="label">'+esc(f)+'</span><input id="'+f+'" class="input"></label>').join('')+'</div>';
+}
 function openBootstrapModal(id,title,bodyHtml,onReady){const old=document.getElementById(id);if(old)old.remove();const wrap=document.createElement('div');wrap.className='modal fade';wrap.id=id;wrap.tabIndex=-1;wrap.innerHTML='<div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content glass-modal"><div class="modal-header"><h5 class="modal-title">'+esc(title)+'</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">'+bodyHtml+'</div></div></div>';document.body.appendChild(wrap);const modal=bootstrap.Modal.getOrCreateInstance(wrap);wrap.addEventListener('shown.bs.modal',()=>{if(onReady)onReady()}, {once:true});wrap.addEventListener('hidden.bs.modal',()=>wrap.remove(),{once:true});modal.show();}
 function openDatabase(tab){const names={products:'Productos',customers:'Clientes',verified_configs:'Verificados',rules:'Reglas',local:'Local Delivery'};const tabs=Object.keys(names).map(k=>'<button type="button" class="nav-link '+(tab===k?'active':'')+'" data-db-tab="'+k+'">'+names[k]+'</button>').join('');const body='<div class="nav nav-pills gap-2 mb-3 db-tabs">'+tabs+'</div><div id="db-body"></div>';openBootstrapModal('dbModal','Data Base',body,()=>{document.querySelectorAll('[data-db-tab]').forEach(b=>b.onclick=()=>{bootstrap.Modal.getInstance($('#dbModal'))?.hide();setTimeout(()=>openDatabase(b.dataset.dbTab),180)});const box=$('#db-body');if(tab==='local'){box.innerHTML=localView();bindLocal()}else{box.innerHTML=crudView(tab);bindCrud(tab)}});}
 function openQuotesModal(){openBootstrapModal('quotesModal','View Quotes',quotesView(),()=>bindQuotes());}
 function openExportModal(){const body='<div class="row g-3"><div class="col-md-4"><label class="label">Desde</label><input id="rf2" class="form-control" type="date"></div><div class="col-md-4"><label class="label">Hasta</label><input id="rt2" class="form-control" type="date"></div><div class="col-md-4"><label class="label">Quote</label><input id="rq2" class="form-control"></div></div><div class="d-flex flex-wrap gap-2 mt-3"><button type="button" class="btn btn-primary" id="export-print">Vista de impresión</button><button type="button" class="btn btn-outline-primary" id="export-csv">Descargar CSV</button></div><div id="export-table" class="table-scroll mt-3"></div>';openBootstrapModal('exportModal','Exportar',body,()=>{const load=async()=>{const qa=await sb.from('quotes').select('*').limit(5000),la=await sb.from('local_quotes').select('*').limit(5000);if(qa.error){toast(qa.error.message,false);return []}if(la.error){toast(la.error.message,false);return []}let rows=[...(qa.data||[]),...(la.data||[])];const q=$('#rq2').value.trim(),f=$('#rf2').value,t=$('#rt2').value;if(q)rows=rows.filter(x=>String(x.quote)===q);if(f||t)rows=rows.filter(x=>{const p=String(x.date||'').split('/'),iso=p.length===3?p[2]+'-'+p[1]+'-'+p[0]:x.date;return(!f||iso>=f)&&(!t||iso<=t)});$('#export-table').innerHTML='<table class="table table-sm align-middle"><thead><tr><th>DATE</th><th>QUOTE</th><th>COMPANY</th><th>PRODUCT</th><th>QTY</th><th>PLATFORM</th><th>PRICE</th><th>ORIGEN</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.quote)+'</td><td>'+esc(x.company_name)+'</td><td>'+esc(x.product)+'</td><td>'+x.qty+'</td><td>'+esc(x.better_platform)+'</td><td>$'+num(x.better_shipping_price).toFixed(2)+'</td><td>'+((x.type||'').toUpperCase().includes('LOCAL')?'Local Delivery':'Quote')+'</td></tr>').join('')+'</tbody></table>';return rows};$('#export-print').onclick=async()=>{const rows=await load();if(!rows.length)return;const w=window.open('','_blank');if(!w){toast('Ventana de impresión bloqueada',false);return}w.document.write('<html><head><title>LogiSuite Reporte</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}</style></head><body><h2>LogiSuite - Reporte</h2>'+$('#export-table').innerHTML+'</body></html>');w.document.close();w.focus();w.print()};$('#export-csv').onclick=async()=>{const rows=await load();if(!rows.length)return;const cols=['date','quote','company_name','product','qty','better_platform','better_shipping_price','type'];const csv=[cols.join(','),...rows.map(x=>cols.map(k=>'"'+String(x[k]??'').replaceAll('"','""')+'"').join(','))].join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='LogiSuite_Report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('CSV descargado')};});}
 function arrangeLocalLayout(){
-  const view=$('#view');if(!view)return;
-  view.className='quote-grid';
-  const cards=[...view.querySelectorAll(':scope > .card')];if(cards.length<7)return;
-  ['area-general','area-customer','area-product','area-cubic','area-carriers','area-services-source','area-cart'].forEach((cls,i)=>cards[i]?.classList.add(cls));
-  const product=cards[2], cubic=cards[3], carrier=cards[4], servicesCard=cards[5], cart=cards[6];
-  const mainGrid=product.querySelector('.grid.g3'), details=product.querySelector('.grid.g4');
-  if(mainGrid&&!product.querySelector('.product-pricing')){
-    const kids=[...mainGrid.children], pricingKids=kids.slice(3);
-    pricingKids.forEach(x=>x.remove());
-    const skuLabel=kids[1];
-    if(skuLabel&&!$('#record-id')){
-      const lab=document.createElement('label');
-      lab.innerHTML='<span class="label">RECORD ID</span><input id="record-id" class="input result" readonly>';
-      mainGrid.insertBefore(lab,mainGrid.children[2]||null);
-    }
-    const pg=document.createElement('div');pg.className='grid g3 product-pricing';
-    pricingKids.forEach(x=>pg.appendChild(x));
-    if(details)details.parentElement.insertBefore(pg,details.nextSibling); else product.appendChild(pg);
-  }
-  if(details){
-    const ver=details.querySelector('label:last-child');
-    if(ver&&ver.querySelector('#pverified'))ver.remove();
-    const repack=details.querySelector('#prepack')?.closest('label');
-    if(repack)repack.classList.add('repack-control');
-  }
-  const bundle=$('#pbundle')?.closest('label');
-  if(bundle&&bundle.parentElement!==cubic){cubic.appendChild(bundle);bundle.classList.add('bundle-wrap');}
-  if(!$('#pverified')){
-    const lab=document.createElement('label');lab.className='verified-wrap';lab.innerHTML='<span class="label">VERIFIED CONFIGURATION</span><textarea id="pverified" class="textarea verified" readonly></textarea>';cubic.appendChild(lab);
-  }
-  if(carrier&&servicesCard&&servicesCard.parentElement!==carrier.querySelector('.carrier-grid')){
-    servicesCard.classList.add('embedded-service');carrier.querySelector('.carrier-grid')?.appendChild(servicesCard);
-  }
-  const winner=$('#winner');
-  if(winner&&!$('#winner-panel')){
-    const wp=document.createElement('section');wp.id='winner-panel';wp.className='section-card winner-card area-winner';wp.innerHTML='<div class="section-title">🏆 PLATAFORMA GANADORA</div>';wp.appendChild(winner);view.appendChild(wp);
-  }
-  let bar=view.querySelector('.action-bar');
-  if(!bar){
-    bar=document.createElement('div');bar.className='action-bar';
-    bar.innerHTML='<button class="btn btn-lilac" id="database">🗄️ Data Base</button><span id="save-slot"></span><button class="btn btn-warning" id="view-quotes">View quotes</button><button class="btn btn-primary" id="export">📤 Export</button><span class="action-spacer"></span><button class="btn btn-primary" id="toggle-note">+ Note</button><button class="btn btn-success" id="add-product">➕ Add product</button><button class="btn btn-danger" id="clear-product">🧹 Limpiar 3-5</button><button class="btn btn-danger" id="clear-all">🧨 Limpiar Todo</button>';view.appendChild(bar);
-  }
-  const save=$('#save-quote'),update=$('#update-quote');
-  if(save&&save.parentElement!==bar)$('#save-slot').appendChild(save);
-  if(update&&update.parentElement!==bar)$('#save-slot').appendChild(update);
-  $('#save-slot').classList.add('save-slot');
-  $('#database').onclick=()=>openDatabase('products');
-  $('#view-quotes').onclick=openQuotesModal;
-  $('#export').onclick=openExportModal;
-  $('#add-product').onclick=()=>$('#add-cart')?.click();
-  $('#clear-product').onclick=clearProductWeb;
-  $('#clear-all').onclick=clearAllWeb;
-  const clearOld=$('#clear-form');if(clearOld)clearOld.classList.add('hidden');
-  const note=$('#pnota');
-  if(note){note.classList.add('hidden','note-floating');bar.insertBefore(note,$('#toggle-note'));$('#toggle-note').onclick=()=>{note.classList.toggle('hidden');if(!note.classList.contains('hidden'))note.focus();};}
-  const company=$('#qcompany');
-  if(company&&!$('#save-cust')){
-    const wrap=document.createElement('div');wrap.className='input-with-btn';company.parentElement.insertBefore(wrap,company);wrap.appendChild(company);
-    const btn=document.createElement('button');btn.type='button';btn.id='save-cust';btn.className='icon-btn';btn.textContent='💾';btn.title='Guardar cliente';wrap.appendChild(btn);btn.onclick=saveCustomerWeb;
-  }
-  if(servicesCard&&!$('#add-services')){
-    const apply=document.createElement('div');apply.className='services-apply';apply.innerHTML='<span>Apply to:</span><label class="form-check"><input id="apply-wwe" class="form-check-input" type="checkbox" checked><span class="form-check-label">WWE</span></label><label class="form-check"><input id="apply-cbcfs" class="form-check-input" type="checkbox"><span class="form-check-label">CBCFS</span></label>';
-    const search=servicesCard.querySelector('#srv-search');search?.parentElement?.insertBefore(apply,search);
-    const b=document.createElement('button');b.id='add-services';b.className='btn btn-success w-100 mt-2';b.textContent='Add Selected';b.onclick=addSelectedServicesWeb;search?.parentElement?.appendChild(b);
-  }
+const view=$('#view');if(!view)return;view.className='quote-grid';
+const cards=[...view.children].filter(x=>x.classList.contains('card'));if(cards.length<7)return;
+['area-general','area-customer','area-product','area-cubic','area-carriers','area-services-source','area-cart'].forEach((cls,i)=>cards[i]?.classList.add(cls));
+const product=cards[2],cubic=cards[3],carriersCard=cards[4],servicesCard=cards[5];
+const pg=product.querySelector('.grid.g3'),details=product.querySelector('.grid.g4');
+if(pg){
+ const labels=[...pg.children];
+ if(!$('#record-id')){const l=document.createElement('label');l.innerHTML='<span class="label">RECORD ID</span><input id="record-id" class="input result" readonly>';pg.insertBefore(l,labels[2]||null);}
+ const price=labels.find(x=>x.querySelector('#pprice')||x.querySelector('#prevenue')||x.querySelector('#pinsured')); 
+ const pricing=document.createElement('div');pricing.className='grid g3 product-pricing';
+ [$('#pprice')?.closest('label'),$('#prevenue')?.closest('label'),$('#pinsured')?.closest('label')].filter(Boolean).forEach(x=>pricing.appendChild(x));
+ if(pricing.children.length){product.querySelector('.product-pricing')?.remove();(details?details.parentElement:product).insertAdjacentElement(details?'afterend':'beforeend',pricing);}
+}
+if(details){
+ const ver=details.querySelector('#pverified')?.closest('label');if(ver)ver.remove();
+ const bundle=product.querySelector('#pbundle')?.closest('label');if(bundle)cubic.appendChild(bundle);
+}
+if(!cubic.querySelector('.cubic-head')){const h=document.createElement('div');h.className='cubic-head';h.innerHTML='<span>#</span><span># Pallet</span><span># Cases</span><span># Level</span><span>Height</span><span>Weight</span><span>Total Weight</span><span>Total CS</span>';cubic.querySelector('#pallets')?.before(h);}
+const top=cubic.querySelector('.grid.g4');if(top)top.classList.add('cubic-top-old');
+if(top){
+ const mh=top.querySelector('#maxheight'),ch=top.querySelector('#customheight');mh?.closest('label')?.classList.add('legacy-height-control');ch?.closest('label')?.classList.add('legacy-height-control');
+ if(!cubic.querySelector('.cubic-controls-final')){
+  const controls=document.createElement('div');controls.className='cubic-controls-final';controls.innerHTML='<div class="cubic-row-tools"><button class="btn lilac" type="button" id="add-pallet">+</button><button class="btn danger" type="button" id="remove-pallet">−</button><span class="bulk-sep">|</span><span>Añadir:</span><input id="bulk-rows" class="input bulk-input" value="1" type="number" min="1"><button class="btn primary" type="button" id="add-bulk">Add Bulk</button><button class="btn danger" type="button" id="reset-pallets">⟲</button><span class="pallet-counter">Filas: <b id="pallet-count">1</b></span></div><label class="grand-total-wrap"><span class="label">GRAND TOTAL:</span><input id="grandtotal" class="input result" readonly></label></div>';cubic.querySelector('#pallets')?.insertAdjacentElement('afterend',controls);
+ }
+}
+const pv=$('#pverified');if(pv&&pv.parentElement!==cubic){cubic.appendChild(pv.closest('label')||pv);}
+if(carriersCard&&servicesCard&&!carriersCard.querySelector('#services-panel')){servicesCard.id='services-panel';servicesCard.classList.add('embedded-service');carriersCard.querySelector('.carrier-grid')?.appendChild(servicesCard);}
+const winner=$('#winner');if(winner&&!winner.closest('.winner-card')){const w=document.createElement('div');w.className='winner-card';w.innerHTML='<div class="section-title">🏆 PLATAFORMA GANADORA</div>';w.appendChild(winner);carriersCard.appendChild(w);}
+let bar=$('#action-bar');if(!bar){bar=document.createElement('div');bar.id='action-bar';bar.className='action-bar';bar.innerHTML='<button class="btn lilac" type="button" id="database">🗄️ Data Base</button><button class="btn success" type="button" id="save-quote">💾 Save Quote</button><button class="btn primary hidden" type="button" id="update-quote">🔄 ACTUALIZAR QUOTE</button><button class="btn warning" type="button" id="view-quotes">View quotes</button><button class="btn primary" type="button" id="export">📤 Export</button><span class="action-spacer"></span><button class="btn primary" type="button" id="toggle-note">+ Note</button><button class="btn success" type="button" id="add-product">➕ Add product</button><button class="btn danger" type="button" id="clear-product">🧹 Limpiar 3-5</button><button class="btn danger" type="button" id="clear-all">🧨 Limpiar Todo</button>';view.appendChild(bar)}
+const save=$('#save-quote'),update=$('#update-quote');if(save&&save.parentElement!==bar)bar.insertBefore(save,bar.children[1]);if(update&&update.parentElement!==bar)bar.insertBefore(update,bar.children[2]);
+const oldClear=$('#clear-form');oldClear?.classList.add('hidden');
+const note=$('#pnota');if(note){note.classList.add('hidden','note-floating');bar.insertBefore(note,$('#toggle-note'));$('#toggle-note').onclick=()=>{note.classList.toggle('hidden');if(!note.classList.contains('hidden'))note.focus()};}
+const company=$('#qcompany');if(company&&!$('#save-cust')){const btn=document.createElement('button');btn.type='button';btn.id='save-cust';btn.className='icon-btn';btn.textContent='💾';btn.title='Guardar cliente';company.parentElement?.appendChild(btn);btn.onclick=saveCustomerWeb;}
 }
 function bindActionButtons(){
 if(window.__logiActionButtonsBound)return;
