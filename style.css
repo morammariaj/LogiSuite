@@ -309,3 +309,262 @@ input,select,textarea,.input,.select,.textarea,.form-control,.form-select{width:
  .area-cubic .cubic-toolbar>.cubic-actions #reset-pallets{grid-column:1/-1}
  .area-cubic .cubic-head{font-size:7px!important}
 }
+
+
+/* ===== Desktop-reference layout: two independent columns ===== */
+.quote-layout{
+  display:block!important;
+  width:100%!important;
+  max-width:1600px!important;
+  margin:0 auto!important;
+  min-width:0!important;
+}
+.quote-columns{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.03fr) minmax(0,.97fr)!important;
+  gap:10px!important;
+  width:100%!important;
+  min-width:0!important;
+  align-items:start!important;
+}
+.quote-col-left,
+.quote-col-right{
+  display:grid!important;
+  grid-auto-rows:max-content!important;
+  gap:10px!important;
+  min-width:0!important;
+  align-content:start!important;
+}
+.quote-columns .area-general,
+.quote-columns .area-customer,
+.quote-columns .area-product,
+.quote-columns .area-cubic,
+.quote-columns .area-carriers,
+.quote-columns .winner-card{
+  grid-area:auto!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  margin:0!important;
+}
+.quote-col-left .carrier-grid{
+  width:100%!important;
+  min-width:0!important;
+}
+.quote-col-left .carrier-grid .carrier,
+.quote-col-left .embedded-service{
+  min-width:0!important;
+  max-width:100%!important;
+}
+
+/* Product information mirrors the working desktop: product/SKU/record/QTY,
+   then details, dimensions/repack, pricing. */
+.product-main-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,2.2fr) minmax(100px,1fr) minmax(130px,1.2fr) minmax(85px,.7fr)!important;
+  gap:8px!important;
+  align-items:end!important;
+}
+.product-main-grid .product-name{min-width:0!important}
+.details-box{
+  margin-top:10px!important;
+  padding:9px!important;
+  border:1px solid var(--ls-border)!important;
+  border-radius:10px!important;
+  background:var(--ls-surface)!important;
+}
+.details-title{
+  margin:0 0 8px!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  color:var(--ls-lilac-dark)!important;
+}
+.details-grid{
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  gap:7px!important;
+}
+.dimension-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:7px!important;
+  margin-top:8px!important;
+}
+.product-pricing{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.6fr) minmax(90px,.8fr) minmax(0,1.2fr)!important;
+  gap:8px!important;
+  margin-top:10px!important;
+}
+.area-product .label{margin-bottom:5px!important}
+
+/* Cubic section */
+.area-cubic .cubic-toolbar{
+  display:grid!important;
+  grid-template-columns:minmax(170px,1fr) minmax(100px,.8fr)!important;
+  gap:8px!important;
+  align-items:end!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.area-cubic .cubic-toolbar>.cubic-actions{
+  grid-column:1/-1!important;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(75px,1fr)) 55px minmax(85px,1fr) 40px!important;
+  gap:6px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.area-cubic .cubic-toolbar>.pallet-counter{
+  align-self:end!important;
+  justify-self:stretch!important;
+  min-width:0!important;
+  white-space:nowrap!important;
+  text-align:center!important;
+}
+.area-cubic .cubic-head{
+  display:grid!important;
+  grid-template-columns:22px repeat(7,minmax(0,1fr))!important;
+  gap:5px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:7px 0 4px!important;
+  padding:0 5px!important;
+  font-size:8.5px!important;
+  line-height:1.1!important;
+  font-weight:800!important;
+  color:var(--ls-muted)!important;
+  text-align:center!important;
+}
+.area-cubic #pallets{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:hidden!important;
+  overflow-y:visible!important;
+  padding:5px!important;
+}
+.area-cubic .pallet-row{
+  display:grid!important;
+  grid-template-columns:22px repeat(7,minmax(0,1fr))!important;
+  gap:5px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin-bottom:5px!important;
+}
+.area-cubic .pallet-row .input{
+  min-width:0!important;
+  width:100%!important;
+  text-align:center!important;
+}
+.area-cubic .grand-total-final{
+  display:flex!important;
+  align-items:center!important;
+  gap:9px!important;
+  width:max-content!important;
+  max-width:100%!important;
+  margin:9px 0 4px 1px!important;
+}
+.area-cubic .grand-total-final .label{margin:0!important;white-space:nowrap!important}
+.area-cubic .grand-total-final #grandtotal{
+  width:120px!important;
+  min-width:120px!important;
+}
+
+/* Carrier/service spacing */
+.area-carriers .carrier-grid{align-items:start!important}
+.area-carriers .carrier-grid .carrier{
+  padding:9px!important;
+}
+.area-carriers .carrier-grid .carrier>label{
+  margin-bottom:8px!important;
+}
+.area-carriers .carrier-grid .carrier>label:last-child{margin-bottom:0!important}
+.area-carriers .carrier .label{margin-bottom:5px!important}
+.area-carriers .carrier .input,
+.area-carriers .carrier .select{margin-bottom:2px!important}
+.area-carriers .embedded-service{
+  padding:9px!important;
+}
+.area-carriers .embedded-service #srv-search{
+  margin:5px 0 7px!important;
+}
+.area-carriers .embedded-service #services{
+  min-width:0!important;
+}
+.area-carriers .embedded-service #selected-services{
+  margin-top:7px!important;
+  min-height:58px!important;
+}
+.area-carriers .embedded-service #clear-services{
+  display:inline-flex!important;
+  width:auto!important;
+  max-width:140px!important;
+  min-width:100px!important;
+  justify-content:center!important;
+  margin:8px 0 0!important;
+  padding:7px 14px!important;
+}
+.area-carriers .embedded-service #add-services{
+  display:block!important;
+  width:100%!important;
+  margin-top:7px!important;
+  min-height:36px!important;
+}
+
+/* Clean modal layers without touching Bootstrap's structure. */
+.modal{z-index:2060!important}
+.modal-backdrop{z-index:2050!important}
+.modal-dialog{position:relative!important;z-index:2061!important}
+.modal-content{position:relative!important;z-index:2062!important;overflow:hidden!important}
+.modal-header{position:relative!important;z-index:5!important;background:var(--ls-card)!important}
+.modal-body{position:relative!important;z-index:1!important;min-width:0!important}
+.modal-body>.card{margin:0!important;border:0!important;box-shadow:none!important}
+.modal-body .data-table{max-width:100%!important}
+.quote-actions{display:flex!important;flex-wrap:wrap!important;gap:5px!important;white-space:normal!important}
+.quote-actions .btn{margin:0!important;min-width:0!important}
+
+/* Compact desktop density for 15.6" laptop / common 1366-1440 widths. */
+@media(min-width:1001px) and (max-width:1500px){
+  .app-main{max-width:1500px!important;padding:8px!important}
+  .quote-columns{grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr)!important;gap:9px!important}
+  .quote-col-left,.quote-col-right{gap:8px!important}
+  .quote-columns>.card,.quote-columns>.section-card{padding:9px!important}
+  .product-main-grid{grid-template-columns:minmax(0,2fr) minmax(92px,.8fr) minmax(120px,1fr) minmax(78px,.7fr)!important}
+  .details-grid{gap:6px!important}
+  .input,.select,.textarea,.form-control,.form-select{font-size:12px!important}
+  .label{font-size:9px!important}
+  .section-title{font-size:13px!important}
+}
+
+/* Mobile keeps the same workflow order as the desktop reference. */
+@media(max-width:760px){
+  .quote-columns{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  .quote-col-left,.quote-col-right{display:contents!important}
+  .quote-columns .area-general{order:1!important;grid-column:1!important}
+  .quote-columns .area-customer{order:2!important;grid-column:1!important}
+  .quote-columns .area-product{order:3!important;grid-column:1!important}
+  .quote-columns .area-cubic{order:4!important;grid-column:1!important}
+  .quote-columns .area-carriers{order:5!important;grid-column:1!important}
+  .quote-columns .winner-card{order:6!important;grid-column:1!important}
+  .product-main-grid{grid-template-columns:1fr 1fr!important}
+  .product-main-grid .product-name{grid-column:1/-1!important}
+  .details-grid{grid-template-columns:1fr 1fr!important}
+  .dimension-grid,.product-pricing{grid-template-columns:1fr!important}
+  .area-cubic .cubic-toolbar{grid-template-columns:1fr!important}
+  .area-cubic .cubic-toolbar>.pallet-counter{grid-column:1!important;justify-self:start!important}
+}
+
+/* Very narrow phones */
+@media(max-width:430px){
+  .area-cubic .cubic-toolbar>.cubic-actions{grid-template-columns:1fr 1fr!important}
+  .area-cubic .cubic-toolbar>.cubic-actions .bulk-input{grid-column:1!important}
+  .area-cubic .cubic-toolbar>.cubic-actions #add-bulk{grid-column:2!important}
+  .area-cubic .cubic-toolbar>.cubic-actions #reset-pallets{grid-column:1/-1!important}
+  .product-main-grid{grid-template-columns:1fr!important}
+  .product-main-grid .product-name{grid-column:auto!important}
+}
