@@ -418,28 +418,34 @@
   }
   window.deleteQuote=compatDeleteQuote;
 
+
+  function ensureQuoteToolbar(){
+    const host=$('#quotes-table');if(!host)return null;
+    let t=document.getElementById('compat-quote-toolbar');
+    const old=host.parentElement.querySelector('.between');
+    if(!t){t=document.createElement('div');t.id='compat-quote-toolbar';t.className='compat-db-toolbar';if(old)old.replaceWith(t);else host.parentElement.insertBefore(t,host)}
+    return t
+  }
   async function compatLoadQuotes(){
-    if(!sbx)return; const host=$('#quotes-table'); if(!host)return;
+    if(!sbx)return;const host=$('#quotes-table');if(!host)return;dbEnsureCss();
+    dbPager.quotes=dbPager.quotes||{page:0,size:25,q:'',from:'',to:'',type:'',sort:'-date'};const st=dbPager.quotes;
     try{
-      const [q,l]=await Promise.all([allRows('quotes','quote_instance_id,date,quote,company_name,address,type,product'),allRows('local_quotes','quote_instance_id,date,quote,company_name,address,type,product')]);
-      let rows=[...q,...l]; const term=norm($('#vq')?.value||''),from=$('#vf')?.value||'',to=$('#vt')?.value||'';
-      if(term)rows=rows.filter(r=>[r.quote,r.company_name,r.address,r.product].some(v=>norm(v).includes(term)));
-      if(from||to)rows=rows.filter(r=>{const d=dateISO(r.date);return(!from||d>=from)&&(!to||d<=to)});
-      const groups=new Map(); for(const r of rows){const k=String(r.quote_instance_id||`LEGACY|${r.quote}|${r.date}|${r.company_name}|${r.address}|${r.type}`);if(!groups.has(k))groups.set(k,r)}
-      rows=[...groups.entries()].map(([iid,r])=>({...r,_iid:iid}));
-      rows.sort((a,b)=>dateISO(b.date).localeCompare(dateISO(a.date))||String(b.quote||'').localeCompare(String(a.quote||'')));
-      host.innerHTML=`<table class="data-table"><thead><tr><th>DATE</th><th>QUOTE #</th><th>COMPANY OR NAME</th><th>ADDRESS</th><th>TYPE</th><th>PRODUCT</th><th>ACTIONS</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.quote)}</td><td>${esc(r.company_name)}</td><td>${esc(r.address)}</td><td>${esc(r.type)}</td><td>${esc(r.product)}</td><td class="compat-action-row"><button class="btn success btn-sm" data-qsp="${esc(r._iid)}">SP</button><button class="btn warning btn-sm" data-qco="${esc(r._iid)}">COST</button><button class="btn primary btn-sm" data-qdet="${esc(r._iid)}">Details</button><button class="btn secondary btn-sm" data-qedit="${esc(r._iid)}">Edit</button><button class="btn danger btn-sm" data-qdel="${esc(r._iid)}">Delete</button></td></tr>`).join('')}</tbody></table>`;
-      host.querySelectorAll('[data-qsp]').forEach(b=>b.onclick=()=>compatOpenPreview(b.dataset.qsp,'SP'));
-      host.querySelectorAll('[data-qco]').forEach(b=>b.onclick=()=>compatOpenPreview(b.dataset.qco,'COST'));
-      host.querySelectorAll('[data-qdet]').forEach(b=>b.onclick=()=>compatOpenDetails(b.dataset.qdet));
-      host.querySelectorAll('[data-qedit]').forEach(b=>b.onclick=()=>legacy.editQuote?.(b.dataset.qedit));
-      host.querySelectorAll('[data-qdel]').forEach(b=>b.onclick=()=>compatDeleteQuote(b.dataset.qdel));
+      const data=await Promise.all([allRows('quotes','quote_instance_id,date,quote,company_name,address,type,product'),allRows('local_quotes','quote_instance_id,date,quote,company_name,address,type,product')]);
+      let rows=[...data[0],...data[1]];const groups=new Map();rows.forEach(r=>{const k=String(r.quote_instance_id||('LEGACY|'+r.quote+'|'+r.date+'|'+r.company_name+'|'+r.address+'|'+r.type));if(!groups.has(k))groups.set(k,r)});rows=[...groups.values()];
+      const types=[...new Set(rows.map(r=>String(r.type||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+      const t=ensureQuoteToolbar();
+      t.innerHTML='<label class="compat-db-field compat-db-search"><span class="label">Search</span><input id="vq" class="input" placeholder="Quote, company, address or product" value="'+esc(st.q)+'"></label><label class="compat-db-field"><span class="label">From</span><input id="vf" class="input" type="date" value="'+esc(st.from)+'"></label><label class="compat-db-field"><span class="label">To</span><input id="vt" class="input" type="date" value="'+esc(st.to)+'"></label><label class="compat-db-field"><span class="label">Type</span><select id="vq-type" class="select"><option value="">All</option>'+types.map(x=>'<option value="'+esc(x)+'"'+(norm(st.type)===norm(x)?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select></label><label class="compat-db-field"><span class="label">Order</span><select id="vq-sort" class="select"><option value="-date">Date newest</option><option value="date">Date oldest</option><option value="quote">Quote low → high</option><option value="-quote">Quote high → low</option><option value="company_name">Company A → Z</option><option value="-company_name">Company Z → A</option></select></label><button class="btn primary" id="search-quotes" type="button">Apply</button><button class="btn secondary" id="clear-quotes-filters" type="button">Clear</button>';
+      $('#vq-sort').value=st.sort;
+      if(st.q)rows=rows.filter(r=>[r.quote,r.company_name,r.address,r.product].some(v=>norm(v).includes(norm(st.q))));if(st.from||st.to)rows=rows.filter(r=>{const d=dateISO(r.date);return(!st.from||d>=st.from)&&(!st.to||d<=st.to)});if(st.type)rows=rows.filter(r=>norm(r.type)===norm(st.type));dbSortRows(rows,st.sort);
+      const pages=Math.max(1,Math.ceil(rows.length/st.size));if(st.page>=pages)st.page=pages-1;const from=st.page*st.size,view=rows.slice(from,from+st.size);
+      host.innerHTML='<table class="data-table"><thead><tr><th>DATE</th><th>QUOTE #</th><th>COMPANY OR NAME</th><th>ADDRESS</th><th>TYPE</th><th>PRODUCT</th><th>ACTIONS</th></tr></thead><tbody>'+view.map(r=>'<tr><td>'+esc(r.date)+'</td><td>'+esc(r.quote)+'</td><td>'+esc(r.company_name)+'</td><td>'+esc(r.address)+'</td><td>'+esc(r.type)+'</td><td>'+esc(r.product)+'</td><td class="compat-quote-actions"><button class="btn success btn-sm" data-qsp="'+esc(r.quote_instance_id)+'">SP</button><button class="btn warning btn-sm" data-qco="'+esc(r.quote_instance_id)+'">COST</button><button class="btn primary btn-sm" data-qdet="'+esc(r.quote_instance_id)+'">Details</button><button class="btn secondary btn-sm" data-qedit="'+esc(r.quote_instance_id)+'">Edit</button><button class="btn danger btn-sm" data-qdel="'+esc(r.quote_instance_id)+'">Delete</button></td></tr>').join('')+'</tbody></table>'+dbPagerHtml(st.page,pages,rows.length,st.size);
+      $('#search-quotes').onclick=()=>{st.q=$('#vq').value.trim();st.from=$('#vf').value;st.to=$('#vt').value;st.type=$('#vq-type').value;st.sort=$('#vq-sort').value;st.page=0;compatLoadQuotes()};$('#clear-quotes-filters').onclick=()=>{st.q='';st.from='';st.to='';st.type='';st.sort='-date';st.page=0;compatLoadQuotes()};
+      host.querySelectorAll('[data-qsp]').forEach(b=>b.onclick=()=>compatOpenPreview(b.dataset.qsp,'SP'));host.querySelectorAll('[data-qco]').forEach(b=>b.onclick=()=>compatOpenPreview(b.dataset.qco,'COST'));host.querySelectorAll('[data-qdet]').forEach(b=>b.onclick=()=>compatOpenDetails(b.dataset.qdet));host.querySelectorAll('[data-qedit]').forEach(b=>b.onclick=()=>legacy.editQuote?.(b.dataset.qedit));host.querySelectorAll('[data-qdel]').forEach(b=>b.onclick=()=>compatDeleteQuote(b.dataset.qdel));
+      host.querySelectorAll('[data-pager="first"]').forEach(b=>b.onclick=()=>{st.page=0;compatLoadQuotes()});host.querySelectorAll('[data-pager="prev"]').forEach(b=>b.onclick=()=>{st.page=Math.max(0,st.page-1);compatLoadQuotes()});host.querySelectorAll('[data-pager="next"]').forEach(b=>b.onclick=()=>{st.page=Math.min(pages-1,st.page+1);compatLoadQuotes()});host.querySelectorAll('[data-pager="last"]').forEach(b=>b.onclick=()=>{st.page=pages-1;compatLoadQuotes()});host.querySelectorAll('.compat-page-size').forEach(b=>b.onchange=e=>{st.size=Number(e.target.value);st.page=0;compatLoadQuotes()})
     }catch(e){console.error(e);toast('No se pudieron cargar las cotizaciones: '+e.message,false)}
   }
   window.loadQuotes=compatLoadQuotes;
-  window.bindQuotes=function(){
-    const b=$('#search-quotes'); if(b)b.onclick=compatLoadQuotes; compatLoadQuotes();
-  };
+  window.bindQuotes=function(){compatLoadQuotes()};
 
   /* Report engine modeled on the desktop Export Reports dialog. */
   const REPORTS=[
@@ -492,7 +498,7 @@
   function selectedFilterValues(wrap){return [...wrap.querySelectorAll('input[type=checkbox]:checked')].map(x=>x.value)}
   function fillFilter(wrap,values,old=[]){
     const menu=wrap.querySelector('.compat-filter-menu'), btn=wrap.querySelector('.compat-filter-btn');const keep=new Set(old);menu.innerHTML=values.map(v=>`<label><input type="checkbox" value="${esc(v)}" ${keep.has(v)?'checked':''}> <span>${esc(v)}</span></label>`).join('');
-    const update=()=>{const vals=selectedFilterValues(wrap);btn.textContent=vals.length?vals.join(', '):'Optional'};menu.querySelectorAll('input').forEach(x=>x.onchange=update);update(); btn.onclick=()=>menu.classList.toggle('hidden');
+    const update=()=>{const vals=selectedFilterValues(wrap);btn.textContent=vals.length?vals.join(', '):'Todos'};menu.querySelectorAll('input').forEach(x=>x.onchange=update);update(); btn.disabled=!values.length; btn.onclick=()=>{if(!btn.disabled)menu.classList.toggle('hidden')};
   }
   function reportFiltersState(){
     return {kind:$('#rep-kind')?.value||'winning_daily',from:$('#rep-all')?.checked?'':$('#rep-from')?.value||'',to:$('#rep-all')?.checked?'':$('#rep-to')?.value||'',quote:$('#rep-quote')?.value?.trim()||'',category:selectedFilterValues($('#rep-cat-wrap')||document.createElement('div')),type:selectedFilterValues($('#rep-type-wrap')||document.createElement('div'))};
@@ -529,7 +535,7 @@
       if(kind==='ld_customers')types=['Local Delivery'];
       if(kind.startsWith('winning')){const rows=await allRows('quotes');types=[...new Set(rows.map(r=>String(r.type||'').trim()).filter(Boolean))].sort()}
     }
-    fillFilter(cw,cats,prevCat.filter(x=>cats.includes(x)));fillFilter(tw,types,prevType.filter(x=>types.includes(x)));
+    fillFilter(cw,cats,prevCat.filter(x=>cats.includes(x)));fillFilter(tw,types,prevType.filter(x=>types.includes(x)));cw.style.display=cats.length?'':'none';tw.style.display=types.length?'':'none';
     return {catWrap:cw,typeWrap:tw};
   }
 
@@ -603,50 +609,99 @@
   window.openExportModal=()=>openReportsCompat('Export Reports');
 
   /* Local Delivery history CRUD. */
-  async function compatBindLocal(){
-    const host=$('#ldtable'); if(!host||!sbx)return;
-    const toolbar=$('#ldq')?.parentElement; if(toolbar&&!toolbar.querySelector('[data-ld-add]')){const b=document.createElement('button');b.type='button';b.className='btn success';b.dataset.ldAdd='1';b.textContent='➕ Add Local Delivery Cost';b.onclick=()=>compatEditLocalDelivery(null);toolbar.appendChild(b)}
+
+  /* Practical DB tables: filters, ordering and pagination. */
+  const dbPager={};
+  const CRUD_CONFIG={
+    products:{table:'products',search:['sku','product_list','category','product_type','product'],filters:[['category','Category'],['product_type','Type']],sorts:[['product_list','Product A → Z'],['-product_list','Product Z → A'],['sku','SKU A → Z'],['-sku','SKU Z → A']]},
+    customers:{table:'customers',search:['id_code','type','company_name','address'],filters:[['type','Type']],sorts:[['company_name','Name A → Z'],['-company_name','Name Z → A'],['address','Address A → Z'],['-id_cliente','ID newest']]},
+    verified_configs:{table:'verified_configs',search:['product_list','verified_config','category','product_type','information_source','quantity'],filters:[['category','Category'],['product_type','Type'],['status','Status']],sorts:[['-date','Date newest'],['date','Date oldest'],['product_list','Product A → Z'],['-id','ID newest']]},
+    rules:{table:'rules',search:['categoria','descripcion','sede_ubicacion','modo_envio','carriers_permitidos','estado'],filters:[['categoria','Category'],['estado','Status'],['modo_envio','Shipping mode']],sorts:[['id_regla','ID low → high'],['-id_regla','ID high → low'],['-fecha','Date newest'],['fecha','Date oldest']]}
+  };
+  function dbEnsureCss(){
+    if(document.getElementById('logi-db-css'))return;
+    const s=document.createElement('style');s.id='logi-db-css';
+    s.textContent='.compat-db-toolbar{display:grid;grid-template-columns:minmax(220px,2fr) repeat(4,minmax(120px,1fr));gap:8px;align-items:end;margin:8px 0 12px}.compat-db-field{min-width:0}.compat-db-field .label{display:block;margin-bottom:4px;font-size:11px;font-weight:800}.compat-pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}.compat-pager-info{font-size:12px;opacity:.78}.compat-quote-actions{display:grid;grid-template-columns:repeat(5,minmax(70px,1fr));gap:5px;align-items:center;min-width:390px}.compat-quote-actions .btn{width:100%;margin:0}@media(max-width:900px){.compat-db-toolbar{grid-template-columns:1fr 1fr}.compat-db-toolbar .compat-db-search{grid-column:1/-1}.compat-quote-actions{min-width:0;grid-template-columns:repeat(2,minmax(72px,1fr))}}';
+    document.head.appendChild(s)
+  }
+  function dbPagerHtml(page,pages,total,size){
+    const dis=x=>x?' disabled':'';
+    return '<div class="compat-pager"><span class="compat-pager-info">'+total.toLocaleString()+' registro(s) · página '+(pages?Math.min(page+1,pages):0)+'/'+(pages||0)+'</span><div class="compat-action-row"><button type="button" class="btn secondary btn-sm" data-pager="first"'+dis(page<=0)+'>«</button><button type="button" class="btn secondary btn-sm" data-pager="prev"'+dis(page<=0)+'>‹</button><select class="select compat-page-size"><option value="25"'+(size===25?' selected':'')+'>25 / página</option><option value="50"'+(size===50?' selected':'')+'>50 / página</option><option value="100"'+(size===100?' selected':'')+'>100 / página</option></select><button type="button" class="btn secondary btn-sm" data-pager="next"'+dis(page>=pages-1)+'>›</button><button type="button" class="btn secondary btn-sm" data-pager="last"'+dis(page>=pages-1)+'>»</button></div></div>'
+  }
+  function dbSortRows(rows,spec){
+    const desc=spec.charAt(0)==='-',key=desc?spec.slice(1):spec;
+    return rows.sort((a,b)=>{
+      let av=a?.[key]??'',bv=b?.[key]??'';
+      if(key==='date'||key==='fecha'){av=dateISO(av);bv=dateISO(bv)}
+      else if(['id','id_cliente','id_regla','qty','quantity'].includes(key)){av=num(av);bv=num(bv)}
+      else{av=String(av).toLocaleUpperCase('es');bv=String(bv).toLocaleUpperCase('es')}
+      const z=(typeof av==='number'&&typeof bv==='number')?av-bv:String(av).localeCompare(String(bv),'es');
+      return desc?-z:z
+    })
+  }
+  function dbMakeToolbar(host,id,html){
+    let t=document.getElementById(id);
+    if(!t){t=document.createElement('div');t.id=id;t.className='compat-db-toolbar';host.parentElement.insertBefore(t,host)}
+    t.innerHTML=html;return t
+  }
+  async function compatLoadCrud(kind,reset){
+    if(!sbx)return;const host=$('#crud-table');if(!host)return;
+    const cfg=CRUD_CONFIG[kind];if(!cfg)return legacy.bindCrud?.(kind);
+    dbEnsureCss();dbPager[kind]=dbPager[kind]||{page:0,size:25,q:'',filters:{},sort:cfg.sorts[0][0]};
+    const st=dbPager[kind];if(reset!==false)st.page=0;
     try{
-      const term=norm($('#ldq')?.value||''); let rows=await allRows('local_delivery_cost_history');
-      if(term)rows=rows.filter(r=>[r.company_name,r.address,r.id_cliente_code,r.type].some(v=>norm(v).includes(term)));
-      rows.sort((a,b)=>dateISO(b.date).localeCompare(dateISO(a.date))||num(b.id)-num(a.id));
-      host.innerHTML=`<table class="data-table"><thead><tr><th>ID</th><th>ID CLIENTE</th><th>CODE</th><th>TYPE</th><th>COMPANY</th><th>ADDRESS</th><th>DATE</th><th>COST 1</th><th>EXTRA</th><th>ACTIONS</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.id)}</td><td>${esc(r.id_cliente)}</td><td>${esc(r.id_cliente_code)}</td><td>${esc(r.type)}</td><td>${esc(r.company_name)}</td><td>${esc(r.address)}</td><td>${esc(r.date)}</td><td>$${num(r.cost_1).toFixed(2)}</td><td>$${num(r.cost_extra).toFixed(2)}</td><td><div class="compat-action-row"><button class="btn primary btn-sm" data-ld-edit="${r.id}">Edit</button><button class="btn danger btn-sm" data-ld-del="${r.id}">Delete</button></div></td></tr>`).join('')}</tbody></table>`;
-      host.querySelectorAll('[data-ld-edit]').forEach(b=>b.onclick=()=>compatEditLocalDelivery(Number(b.dataset.ldEdit)));
-      host.querySelectorAll('[data-ld-del]').forEach(b=>b.onclick=()=>compatDeleteLocalDelivery(Number(b.dataset.ldDel)));
+      const rows=await allRows(cfg.table);
+      const filterHtml=cfg.filters.map(f=>'<label class="compat-db-field"><span class="label">'+esc(f[1])+'</span><select class="select" data-db-filter="'+esc(f[0])+'"><option value="">All</option>'+[...new Set(rows.map(r=>String(r?.[f[0]]??'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es')).map(v=>'<option value="'+esc(v)+'"'+(st.filters[f[0]]===v?' selected':'')+'>'+esc(v)+'</option>').join('')+'</select></label>').join('');
+      const sortHtml=cfg.sorts.map(x=>'<option value="'+esc(x[0])+'"'+(st.sort===x[0]?' selected':'')+'>'+esc(x[1])+'</option>').join('');
+      dbMakeToolbar(host,'compat-crud-toolbar','<label class="compat-db-field compat-db-search"><span class="label">Search</span><input id="compat-crud-search" class="input" placeholder="Name, code, address..." value="'+esc(st.q)+'"></label>'+filterHtml+'<label class="compat-db-field"><span class="label">Order</span><select id="compat-crud-sort" class="select">'+sortHtml+'</select></label><button type="button" class="btn primary" id="compat-crud-apply">Apply</button><button type="button" class="btn secondary" id="compat-crud-clear">Clear</button>');
+      const q=norm(st.q);let filtered=rows.filter(r=>!q||cfg.search.some(k=>norm(r?.[k]).includes(q)));
+      Object.entries(st.filters).forEach(([k,v])=>{if(v)filtered=filtered.filter(r=>norm(r?.[k])===norm(v))});
+      dbSortRows(filtered,st.sort);
+      const pages=Math.max(1,Math.ceil(filtered.length/st.size));if(st.page>=pages)st.page=pages-1;
+      const from=st.page*st.size,view=filtered.slice(from,from+st.size),cell=v=>esc(v??'');
+      let body='';
+      if(kind==='products')body='<table class="data-table"><thead><tr><th>ID</th><th>SKU</th><th>PRODUCT LIST</th><th>CATEGORY</th><th>TYPE</th><th>PACKAGE</th><th>WEIGHT</th><th>HEIGHT</th><th>TI</th><th>HI</th><th>TiHi</th><th>ACTIONS</th></tr></thead><tbody>'+view.map((r,i)=>'<tr><td>'+cell(r.id)+'</td><td>'+cell(r.sku)+'</td><td>'+cell(r.product_list)+'</td><td>'+cell(r.category)+'</td><td>'+cell(r.product_type)+'</td><td>'+cell(r.package_units)+'</td><td>'+cell(r.weight)+'</td><td>'+cell(r.height)+'</td><td>'+cell(r.ti)+'</td><td>'+cell(r.hi)+'</td><td>'+cell(r.tihi)+'</td><td class="compat-action-row"><button class="btn primary btn-sm" data-db-view="'+(from+i)+'">View</button><button class="btn success btn-sm" data-db-edit="'+(from+i)+'">Edit</button><button class="btn danger btn-sm" data-db-del="'+(from+i)+'">Delete</button></td></tr>').join('')+'</tbody></table>';
+      if(kind==='customers')body='<table class="data-table"><thead><tr><th>ID</th><th>CODE</th><th>TYPE</th><th>COMPANY / NAME</th><th>ADDRESS</th><th>LD 1st</th><th>LD EXTRA</th><th>ACTIONS</th></tr></thead><tbody>'+view.map((r,i)=>'<tr><td>'+cell(r.id_cliente)+'</td><td>'+cell(r.id_code)+'</td><td>'+cell(r.type)+'</td><td>'+cell(r.company_name)+'</td><td>'+cell(r.address)+'</td><td>'+cell(r.local_delivery_cost_1)+'</td><td>'+cell(r.local_delivery_cost_extra)+'</td><td class="compat-action-row"><button class="btn success btn-sm" data-db-edit="'+(from+i)+'">Edit</button><button class="btn danger btn-sm" data-db-del="'+(from+i)+'">Delete</button></td></tr>').join('')+'</tbody></table>';
+      if(kind==='verified_configs')body='<table class="data-table"><thead><tr><th>ID</th><th>DATE</th><th>TIME</th><th>PRODUCT</th><th>QTY</th><th>CONFIGURATION</th><th>SOURCE</th><th>CATEGORY</th><th>TYPE</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>'+view.map(r=>'<tr><td>'+cell(r.id)+'</td><td>'+cell(r.date)+'</td><td>'+cell(r.time)+'</td><td>'+cell(r.product_list)+'</td><td>'+cell(r.quantity)+'</td><td>'+cell(r.verified_config)+'</td><td>'+cell(r.information_source)+'</td><td>'+cell(r.category)+'</td><td>'+cell(r.product_type)+'</td><td>'+cell(r.status||'VIGENTE')+'</td><td class="compat-action-row"><button class="btn primary btn-sm" data-v-edit="'+r.id+'">Edit</button><button class="btn danger btn-sm" data-v-del="'+r.id+'">Delete</button></td></tr>').join('')+'</tbody></table>';
+      if(kind==='rules')body='<table class="data-table"><thead><tr><th>ID</th><th>STATUS</th><th>DATE</th><th>CATEGORY</th><th>CRITERION</th><th>DESCRIPTION</th><th>LOCATION</th><th>MODE</th><th>CARRIERS</th><th>UPS</th><th>REVENUE</th><th>VALIDATION</th><th>NOTE</th><th>ACTIONS</th></tr></thead><tbody>'+view.map(r=>'<tr><td>'+cell(r.id_regla)+'</td><td>'+cell(r.estado)+'</td><td>'+cell(r.fecha)+'</td><td>'+cell(r.categoria)+'</td><td>'+cell(r.criterio_busqueda)+'</td><td>'+cell(r.descripcion)+'</td><td>'+cell(r.sede_ubicacion)+'</td><td>'+cell(r.modo_envio)+'</td><td>'+cell(r.carriers_permitidos)+'</td><td>'+cell(r.umbral_ups)+'</td><td>'+cell(r.revenue)+'</td><td>'+cell(r.requiere_validacion)+'</td><td>'+cell(r.nota)+'</td><td class="compat-action-row"><button class="btn primary btn-sm" data-r-edit="'+r.id_regla+'">Edit</button><button class="btn warning btn-sm" data-r-toggle="'+r.id_regla+'">'+(norm(r.estado)==='ACTIVA'?'Deactivate':'Activate')+'</button><button class="btn danger btn-sm" data-r-del="'+r.id_regla+'">Delete</button></td></tr>').join('')+'</tbody></table>';
+      host.innerHTML=body+dbPagerHtml(st.page,pages,filtered.length,st.size);
+      $('#compat-crud-search').oninput=e=>{st.q=e.target.value;st.page=0};
+      $('#compat-crud-apply').onclick=()=>{st.q=$('#compat-crud-search').value.trim();st.filters={};host.querySelectorAll('[data-db-filter]').forEach(x=>{if(x.value)st.filters[x.dataset.dbFilter]=x.value});st.sort=$('#compat-crud-sort').value;compatLoadCrud(kind)};
+      $('#compat-crud-clear').onclick=()=>{st.q='';st.filters={};st.sort=cfg.sorts[0][0];compatLoadCrud(kind)};
+      host.querySelectorAll('[data-pager="first"]').forEach(b=>b.onclick=()=>{st.page=0;compatLoadCrud(kind,false)});
+      host.querySelectorAll('[data-pager="prev"]').forEach(b=>b.onclick=()=>{st.page=Math.max(0,st.page-1);compatLoadCrud(kind,false)});
+      host.querySelectorAll('[data-pager="next"]').forEach(b=>b.onclick=()=>{st.page=Math.min(pages-1,st.page+1);compatLoadCrud(kind,false)});
+      host.querySelectorAll('[data-pager="last"]').forEach(b=>b.onclick=()=>{st.page=pages-1;compatLoadCrud(kind,false)});
+      host.querySelectorAll('.compat-page-size').forEach(b=>b.onchange=e=>{st.size=Number(e.target.value);st.page=0;compatLoadCrud(kind,false)});
+      const find=i=>filtered[i];
+      host.querySelectorAll('[data-db-view]').forEach(b=>b.onclick=()=>{const r=find(+b.dataset.dbView);if(r)showProductFicha(r)});
+      host.querySelectorAll('[data-db-edit]').forEach(b=>b.onclick=()=>{const r=find(+b.dataset.dbEdit);if(r)window.editCrud(kind,r)});
+      host.querySelectorAll('[data-db-del]').forEach(b=>b.onclick=async()=>{const r=find(+b.dataset.dbDel);if(!r||!confirm('¿Eliminar registro?'))return;const pk=kind==='products'?'id':'id_cliente';const res=await sbx.from(cfg.table).delete().eq(pk,r[pk]);if(res.error){toast(res.error.message,false);return}await loadReferenceData();compatLoadCrud(kind,false)});
+      host.querySelectorAll('[data-v-edit]').forEach(b=>b.onclick=()=>{const r=filtered.find(x=>String(x.id)===b.dataset.vEdit);if(r)compatEditVerified(r)});
+      host.querySelectorAll('[data-v-del]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Eliminar verificado?'))return;const res=await sbx.from('verified_configs').delete().eq('id',b.dataset.vDel);if(res.error){toast(res.error.message,false);return}compatLoadCrud('verified_configs',false)});
+      host.querySelectorAll('[data-r-edit]').forEach(b=>b.onclick=()=>{const r=filtered.find(x=>String(x.id_regla)===b.dataset.rEdit);if(r)compatEditRule(r)});
+      host.querySelectorAll('[data-r-toggle]').forEach(b=>b.onclick=async()=>{const r=filtered.find(x=>String(x.id_regla)===b.dataset.rToggle);if(!r)return;let note=r.nota||'';if(norm(r.estado)==='ACTIVA'){note=prompt('Motivo:',note||'')??note;if(!note.trim())return}const res=await sbx.from('rules').update({estado:norm(r.estado)==='ACTIVA'?'INACTIVA':'ACTIVA',nota:note}).eq('id_regla',r.id_regla);if(res.error){toast(res.error.message,false);return}toast('Regla actualizada');compatLoadCrud('rules',false)});
+      host.querySelectorAll('[data-r-del]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Eliminar regla?'))return;const res=await sbx.from('rules').delete().eq('id_regla',b.dataset.rDel);if(res.error){toast(res.error.message,false);return}compatLoadCrud('rules',false)});
+    }catch(e){console.error(e);toast('No se pudo cargar la tabla: '+e.message,false)}
+  }
+  window.bindCrud=async function(kind){
+    dbEnsureCss();const nb=$('#crud-new');if(nb){nb.onclick=()=>kind==='verified_configs'?compatEditVerified(null):kind==='rules'?compatEditRule(null):legacy.editCrud?.(kind,null)}await compatLoadCrud(kind,true)
+  };
+  window.loadCrud=compatLoadCrud;
+
+  /* Local Delivery with filters and pagination. */
+  async function compatBindLocal(){
+    const host=$('#ldtable');if(!host||!sbx)return;dbEnsureCss();
+    dbPager.local=dbPager.local||{page:0,size:25,q:'',from:'',to:'',sort:'-date'};const st=dbPager.local;
+    const row=$('#ldq')?.parentElement;
+    if(row&&!row.dataset.compatBuilt){row.dataset.compatBuilt='1';row.className='compat-db-toolbar';row.innerHTML='<label class="compat-db-field compat-db-search"><span class="label">Search</span><input id="ldq" class="input" placeholder="Company, address or code"></label><label class="compat-db-field"><span class="label">From</span><input id="ld-from" class="input" type="date"></label><label class="compat-db-field"><span class="label">To</span><input id="ld-to" class="input" type="date"></label><label class="compat-db-field"><span class="label">Order</span><select id="ld-sort" class="select"><option value="-date">Date newest</option><option value="date">Date oldest</option><option value="company_name">Company A → Z</option><option value="-company_name">Company Z → A</option></select></label><button class="btn primary" id="ldsearch" type="button">Apply</button><button class="btn success" id="ld-add-new" type="button">+ Add</button><button class="btn secondary" id="ld-clear" type="button">Clear</button>';$('#ldq').value=st.q;$('#ld-from').value=st.from;$('#ld-to').value=st.to;$('#ld-sort').value=st.sort;$('#ldsearch').onclick=()=>{st.q=$('#ldq').value.trim();st.from=$('#ld-from').value;st.to=$('#ld-to').value;st.sort=$('#ld-sort').value;st.page=0;compatBindLocal()};$('#ld-clear').onclick=()=>{st.q='';st.from='';st.to='';st.sort='-date';st.page=0;compatBindLocal()};$('#ld-add-new').onclick=()=>compatEditLocalDelivery(null)}
+    try{
+      let rows=await allRows('local_delivery_cost_history');if(st.q){const q=norm(st.q);rows=rows.filter(r=>[r.company_name,r.address,r.id_cliente_code,r.type].some(v=>norm(v).includes(q)))}if(st.from||st.to)rows=rows.filter(r=>{const d=dateISO(r.date);return(!st.from||d>=st.from)&&(!st.to||d<=st.to)});dbSortRows(rows,st.sort);const pages=Math.max(1,Math.ceil(rows.length/st.size));if(st.page>=pages)st.page=pages-1;const from=st.page*st.size,view=rows.slice(from,from+st.size);
+      host.innerHTML='<table class="data-table"><thead><tr><th>ID</th><th>ID CLIENTE</th><th>CODE</th><th>TYPE</th><th>COMPANY</th><th>ADDRESS</th><th>DATE</th><th>COST 1</th><th>EXTRA</th><th>ACTIONS</th></tr></thead><tbody>'+view.map(r=>'<tr><td>'+esc(r.id)+'</td><td>'+esc(r.id_cliente)+'</td><td>'+esc(r.id_cliente_code)+'</td><td>'+esc(r.type)+'</td><td>'+esc(r.company_name)+'</td><td>'+esc(r.address)+'</td><td>'+esc(r.date)+'</td><td>$'+num(r.cost_1).toFixed(2)+'</td><td>$'+num(r.cost_extra).toFixed(2)+'</td><td class="compat-action-row"><button class="btn primary btn-sm" data-ld-edit="'+r.id+'">Edit</button><button class="btn danger btn-sm" data-ld-del="'+r.id+'">Delete</button></td></tr>').join('')+'</tbody></table>'+dbPagerHtml(st.page,pages,rows.length,st.size);
+      host.querySelectorAll('[data-ld-edit]').forEach(b=>b.onclick=()=>compatEditLocalDelivery(Number(b.dataset.ldEdit)));host.querySelectorAll('[data-ld-del]').forEach(b=>b.onclick=()=>compatDeleteLocalDelivery(Number(b.dataset.ldDel)));host.querySelectorAll('[data-pager="first"]').forEach(b=>b.onclick=()=>{st.page=0;compatBindLocal()});host.querySelectorAll('[data-pager="prev"]').forEach(b=>b.onclick=()=>{st.page=Math.max(0,st.page-1);compatBindLocal()});host.querySelectorAll('[data-pager="next"]').forEach(b=>b.onclick=()=>{st.page=Math.min(pages-1,st.page+1);compatBindLocal()});host.querySelectorAll('[data-pager="last"]').forEach(b=>b.onclick=()=>{st.page=pages-1;compatBindLocal()});host.querySelectorAll('.compat-page-size').forEach(b=>b.onchange=e=>{st.size=Number(e.target.value);st.page=0;compatBindLocal()})
     }catch(e){toast('No se pudo cargar Local Delivery: '+e.message,false)}
   }
-  async function compatDeleteLocalDelivery(id){if(!confirm('¿Eliminar este registro histórico de costo?'))return;const {error}=await sbx.from('local_delivery_cost_history').delete().eq('id',id);if(error){toast(error.message,false);return}toast('Registro histórico eliminado');compatBindLocal()}
-
-  async function compatEditLocalDelivery(id=null){
-    let row=null; if(id!=null){const {data,error}=await sbx.from('local_delivery_cost_history').select('*').eq('id',id).maybeSingle();if(error||!data){toast(error?.message||'Registro no encontrado',false);return}row=data}
-    const localCustomers=await allRows('customers');
-    const opts=['<option value="">— Seleccionar cliente —</option>',...localCustomers.filter(c=>localType(c.type)).map(c=>`<option value="${esc(c.id_cliente)}">${esc(c.company_name)} · ${esc(c.address)}</option>`)].join('');
-    const body=`<div class="compat-form-grid"><label class="full"><span class="label">Customer</span><select id="ldc-customer" class="select">${opts}</select></label><label><span class="label">Company or Name</span><input id="ldc-company" class="input"></label><label><span class="label">ZIP CODE</span><input id="ldc-zip" class="input" maxlength="5" inputmode="numeric"></label><label class="full"><span class="label">ZIP CODE/ADDRESS</span><textarea id="ldc-address" class="textarea"></textarea></label><label><span class="label">DATE</span><input id="ldc-date" type="date" class="input"></label><label><span class="label">ID CLIENTE</span><input id="ldc-id" class="input" readonly></label><label><span class="label">ID CLIENTE CODE</span><input id="ldc-code" class="input" readonly></label><label><span class="label">Costo LD 1er Pallet</span><input id="ldc-c1" class="input" type="number" step="0.01"></label><label><span class="label">Costo LD Extra</span><input id="ldc-ce" class="input" type="number" step="0.01"></label></div><div class="compat-action-row" style="justify-content:flex-end;margin-top:14px"><button class="btn secondary" id="ldc-cancel" type="button">Cancel</button><button class="btn success" id="ldc-save" type="button">Save</button></div>`;
-    window.openBootstrapModal('compatLdModal',id==null?'Add Local Delivery Cost':'Edit Local Delivery Cost',body,()=>{
-      const customer=$('#ldc-customer'),company=$('#ldc-company'),zip=$('#ldc-zip'),addr=$('#ldc-address'),date=$('#ldc-date'),cid=$('#ldc-id'),code=$('#ldc-code'),c1=$('#ldc-c1'),ce=$('#ldc-ce');
-      if(row){customer.value=String(row.id_cliente??'');company.value=row.company_name||'';addr.value=row.address||'';zip.value=(String(row.address||'').match(/\b\d{5}\b/)||[''])[0];date.value=dateISO(row.date);cid.value=row.id_cliente??'';code.value=row.id_cliente_code||'';c1.value=row.cost_1??'';ce.value=row.cost_extra??''}
-      else{date.value=todayISO();ce.value='20'}
-      const refreshCode=()=>{const z=String(zip.value||'').replace(/\D/g,'').slice(0,5);if(!z){code.value='';return}const used=new Set(localCustomers.filter(c=>String(c.id_cliente)!==String(cid.value||'')).map(c=>norm(c.id_code)));const base='LD'+z;let v=base,n=2;while(used.has(norm(v))){v=base+'_'+n;n++}code.value=v};
-      customer.onchange=()=>{const c=localCustomers.find(x=>String(x.id_cliente)===String(customer.value));if(c){cid.value=c.id_cliente??'';code.value=c.id_code||'';company.value=c.company_name||'';addr.value=c.address||'';zip.value=(String(c.address||'').match(/\b\d{5}\b/)||[''])[0]}};
-      zip.oninput=refreshCode;addr.oninput=()=>{if(!zip.value){const z=String(addr.value).match(/\b\d{5}\b/);if(z)zip.value=z[0]}refreshCode()};
-      $('#ldc-cancel').onclick=()=>window.bootstrap.Modal.getInstance($('#compatLdModal'))?.hide();
-      $('#ldc-save').onclick=async()=>{
-        const companyV=company.value.trim(),addressV=addr.value.trim(),z=String(zip.value||'').replace(/\D/g,'').slice(0,5);if(!companyV||!addressV||z.length!==5){toast('Company, Address y ZIP Code de 5 dígitos son obligatorios',false);return}
-        let idCliente=cid.value?Number(cid.value):null;
-        if(!idCliente){idCliente=Math.max(0,...localCustomers.map(c=>num(c.id_cliente)))+1;const ins=await sbx.from('customers').insert({id_cliente:idCliente,id_code:code.value,type:'Local Delivery',company_name:companyV,address:addressV,accessories:'-',local_delivery_cost_1:'',local_delivery_cost_extra:''});if(ins.error){toast(ins.error.message,false);return}}
-        else{const up=await sbx.from('customers').update({id_code:code.value,type:'Local Delivery',company_name:companyV,address:addressV,accessories:'-'}).eq('id_cliente',idCliente);if(up.error){toast(up.error.message,false);return}}
-        const payload={id_cliente:idCliente,id_cliente_code:code.value,type:'Local Delivery',company_name:companyV,address:addressV,date:dateDMY(date.value),cost_1:c1.value===''?null:num(c1.value),cost_extra:ce.value===''?null:num(ce.value)};
-        const save=id==null?await sbx.from('local_delivery_cost_history').insert(payload):await sbx.from('local_delivery_cost_history').update(payload).eq('id',id);
-        if(save.error){toast(save.error.message,false);return}toast(id==null?'Local Delivery guardado':'Local Delivery actualizado');window.bootstrap.Modal.getInstance($('#compatLdModal'))?.hide();compatBindLocal();
-      };
-      if(row?.id_cliente_code){code.value=row.id_cliente_code}else{refreshCode()}
-    });
-  }
-  window.bindLocal=async function(){
-    ensureCompatCss(); const s=$('#ldsearch'); if(s)s.onclick=compatBindLocal; $('#ldq')?.addEventListener('input',()=>compatBindLocal()); compatBindLocal();
-  };
-  window.editLocalDelivery=compatEditLocalDelivery;
-
+  window.bindLocal=compatBindLocal;
   /* Specialized Verified / Rules editors. */
   async function compatEditVerified(row=null){
     const products=await allRows('products');
