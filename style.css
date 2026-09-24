@@ -653,3 +653,55 @@ input,select,textarea,.input,.select,.textarea,.form-control,.form-select{width:
   .embedded-service #services .pill{grid-template-columns:18px minmax(0,1fr)!important}
   .db-panel .data-table td:last-child{white-space:normal!important}
 }
+
+
+/* ===== v25: spacing polish only, no structural rewrite ===== */
+.quote-columns{gap:12px!important}
+.quote-col-left,.quote-col-right{gap:10px!important}
+.quote-columns .card,.quote-columns .section-card{padding:11px!important}
+.quote-columns .section-title{margin-bottom:10px!important}
+.quote-columns .grid{gap:8px!important}
+.area-product .details-box{margin-top:11px!important;padding:10px!important}
+.area-product .details-grid,.area-product .dimension-grid,.area-product .product-pricing{gap:9px!important}
+.area-product .label,.area-customer .label,.area-general .label,.area-cubic .label,.area-carriers .label{margin-bottom:6px!important}
+.area-product .input,.area-product .select,.area-product .textarea,
+.area-customer .input,.area-customer .select,.area-customer .textarea,
+.area-cubic .input,.area-cubic .select,.area-cubic .textarea,
+.area-carriers .input,.area-carriers .select,.area-carriers .textarea{margin-bottom:3px!important}
+.area-carriers .carrier-grid{gap:8px!important}
+.area-carriers .carrier-grid .carrier{padding:10px!important}
+.area-carriers .carrier-grid .carrier>label{margin-bottom:9px!important}
+.area-carriers .embedded-service{padding:10px!important}
+.area-carriers .embedded-service #services{max-height:180px!important}
+.area-carriers .embedded-service #selected-services{min-height:56px!important}
+.area-carriers .embedded-service #clear-services{max-width:135px!important;min-width:105px!important;margin-top:8px!important}
+.area-cubic .cubic-head{font-size:9px!important;margin:8px 0 5px!important}
+.area-cubic .pallet-row{margin-bottom:6px!important}
+.area-cubic .grand-total-final{margin:10px 0 5px 2px!important}
+
+@media(min-width:1001px){
+  .area-cubic .cubic-toolbar{
+    display:grid!important;
+    grid-template-columns:minmax(180px,1fr) minmax(430px,auto)!important;
+    column-gap:8px!important;
+    align-items:end!important;
+  }
+  .area-cubic .cubic-toolbar>label:first-child{grid-column:1!important}
+  .area-cubic .cubic-toolbar>#customheight-wrap{grid-column:1!important}
+  .area-cubic .cubic-toolbar>.cubic-actions{
+    grid-column:2!important;
+    display:grid!important;
+    grid-template-columns:90px 90px 55px 95px 40px!important;
+    gap:6px!important;
+    width:100%!important;
+    min-width:0!important;
+  }
+  .area-cubic .cubic-toolbar>.pallet-counter{
+    grid-column:2!important;
+    justify-self:end!important;
+    width:95px!important;
+    min-width:95px!important;
+    margin-top:0!important;
+    text-align:center!important;
+  }
+}
