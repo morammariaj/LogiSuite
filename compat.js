@@ -281,11 +281,16 @@
   }
   window.downloadDatabaseSql=downloadDatabaseSql;
   function ensureTopBackupButton(){
-    const top=document.querySelector('.top-actions'); if(!top||document.getElementById('backup-local-db'))return;
-    const b=document.createElement('button');b.type='button';b.id='backup-local-db';b.className='btn btn-sm btn-outline-success';b.title='Descargar products.db, quotes.db y rules.db listos para sustituir el sistema local';b.textContent='💾 DB Local';b.onclick=downloadLocalDatabaseZip;
-    top.insertBefore(b,document.getElementById('theme')||top.firstChild||null);
-    const s=document.createElement('button');s.type='button';s.id='backup-sql';s.className='btn btn-sm btn-outline-secondary';s.title='Descargar respaldo SQL para migraciones';s.textContent='📜 SQL';s.onclick=downloadDatabaseSql;
-    top.insertBefore(s,document.getElementById('theme')||top.firstChild||null);
+    const top=document.querySelector('.top-actions');if(!top)return;
+    const theme=document.getElementById('theme')||top.firstChild||null;
+    if(!document.getElementById('backup-local-db')){
+      const b=document.createElement('button');b.type='button';b.id='backup-local-db';b.className='btn btn-sm btn-outline-success';b.title='Descargar products.db, quotes.db y rules.db listos para sustituir el sistema local';b.textContent='💾 DB Local';b.onclick=()=>window.downloadLocalDatabaseZip?.();
+      top.insertBefore(b,theme);
+    }
+    if(!document.getElementById('backup-sql')){
+      const s=document.createElement('button');s.type='button';s.id='backup-sql';s.className='btn btn-sm btn-outline-secondary';s.title='Descargar respaldo SQL para migraciones';s.textContent='📜 SQL';s.onclick=()=>window.downloadDatabaseSql?.();
+      top.insertBefore(s,theme);
+    }
   }
 
   async function downloadLocalDatabaseZip(){
