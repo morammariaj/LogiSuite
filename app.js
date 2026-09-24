@@ -117,17 +117,23 @@ function waitForLoadingElement(selector,message='Cargando información…',timeo
 function openDatabase(tab){
  const names={products:'Productos',customers:'Clientes',verified_configs:'Verificados',rules:'Reglas',local:'Local Delivery',reports:'Reportes',quotes:'DataBase Quotes'};
  const tabs=Object.keys(names).map(k=>'<button type="button" class="nav-link '+(tab===k?'active':'')+'" data-db-tab="'+k+'">'+names[k]+'</button>').join('');
- const body='<div class="nav nav-pills gap-2 mb-3 db-tabs">'+tabs+'</div><div id="db-body"></div>';
- openBootstrapModal('dbModal','Data Base',body,async()=>{
+ const body='<div class="nav nav-pills gap-2 mb-3 db-tabs">'+tabs+'</div><div id="db-body"><div class="muted" style="padding:18px;text-align:center">Cargando…</div></div>';
+ const mount=()=>{
   document.querySelectorAll('[data-db-tab]').forEach(b=>b.onclick=()=>{bootstrap.Modal.getInstance($('#dbModal'))?.hide();setTimeout(()=>openDatabase(b.dataset.dbTab),180)});
-  const box=$('#db-body'); if(!box)return;
+  const box=$('#db-body');if(!box)return;
   try{
-   if(tab==='local'){box.innerHTML=localView();await (window.bindLocal||bindLocal)?.()}
-   else if(tab==='reports'){box.innerHTML=(window.reportViewHtml?window.reportViewHtml():reportsView());await (window.bindReports||bindReports)?.()}
-   else if(tab==='quotes'){box.innerHTML=(window.quotesView?window.quotesView():quotesView());await (window.bindQuotes||bindQuotes)?.()}
-   else{box.innerHTML=crudView(tab);await (window.bindCrud||bindCrud)?.(tab)}
-  }catch(e){console.error('Data Base tab error',e);box.innerHTML='<div class="alert alert-danger">No se pudo cargar esta sección: '+esc(e.message||e)+'</div>';toast('No se pudo cargar Data Base: '+(e.message||e),false)}
- });
+   const load=async()=>{
+    if(tab==='local'){box.innerHTML=localView();if(typeof window.bindLocal==='function')await window.bindLocal();else if(typeof bindLocal==='function')await bindLocal()}
+    else if(tab==='reports'){box.innerHTML=(typeof window.reportViewHtml==='function'?window.reportViewHtml():reportsView());if(typeof window.bindReports==='function')await window.bindReports();else if(typeof bindReports==='function')await bindReports()}
+    else if(tab==='quotes'){box.innerHTML=(typeof window.quotesView==='function'?window.quotesView():quotesView());if(typeof window.bindQuotes==='function')await window.bindQuotes();else if(typeof bindQuotes==='function')await bindQuotes()}
+    else{box.innerHTML=crudView(tab);if(typeof window.bindCrud==='function')await window.bindCrud(tab);else if(typeof bindCrud==='function')await bindCrud(tab)}
+   };
+   Promise.resolve(load()).catch(e=>{console.error('Data Base tab error',e);box.innerHTML='<div class="alert alert-danger"><b>No se pudo cargar esta sección.</b><br>'+esc(e.message||e)+'</div>';toast('No se pudo cargar Data Base: '+(e.message||e),false)});
+  }catch(e){console.error('Data Base mount error',e);box.innerHTML='<div class="alert alert-danger">'+esc(e.message||e)+'</div>'}
+ };
+ openBootstrapModal('dbModal','Data Base',body,mount);
+ // Safety net: populate even if Bootstrap's shown event is missed.
+ setTimeout(()=>{if(document.getElementById('dbModal')&&!document.querySelector('#db-body .data-table,#db-body .report-panel,#db-body .local-panel'))mount()},250);
 }
 function openReportsModal(){openBootstrapModal('reportsModal','Reportes',reportsView(),()=>bindReports());}
 function openQuotesModal(){openBootstrapModal('quotesModal','View Quotes',quotesView(),()=>bindQuotes());}
@@ -244,7 +250,7 @@ on('repack-other','input',()=>$('#pdims').value=$('#repack-other').value);
 on('maxheight_carrier','change',()=>setHeightUI('carrier'));on('maxheight','change',()=>setHeightUI('main'));on('customheight','input',()=>setHeightUI('main'));on('customheight_carrier','input',()=>setHeightUI('carrier'));
 on('qdate','change',e=>loadEmail(e.target.value));
 on('configmode','change',()=>{});
-on('database','click',()=>openDatabase('products'));on('backup-local-db','click',()=>{if(typeof window.downloadLocalDatabaseZip==='function')window.downloadLocalDatabaseZip();else toast('El módulo de respaldo todavía está cargando. Recarga la página e inténtalo de nuevo.',false)});on('view-quotes','click',openQuotesModal);on('export','click',openExportModal);on('reports','click',openReportsModal);
+on('database','click',()=>openDatabase('products'));on('backup-local-db','click',()=>{try{if(typeof window.downloadLocalDatabaseZip==='function'){Promise.resolve(window.downloadLocalDatabaseZip()).catch(e=>{console.error(e);toast('No se pudo generar la DB local: '+(e.message||e),false)})}else toast('El módulo de respaldo todavía está cargando. Recarga la página e inténtalo de nuevo.',false)}catch(e){console.error(e);toast('No se pudo iniciar el respaldo: '+(e.message||e),false)}});on('view-quotes','click',openQuotesModal);on('export','click',openExportModal);on('reports','click',openReportsModal);
 on('save-cust','click',saveCustomerWeb);on('save-quote','click',saveQuote);on('update-quote','click',saveQuote);on('add-product','click',addCart);on('clear-product','click',()=>clearProductWeb());on('clear-all','click',clearAllWeb);
 on('toggle-note','click',()=>{const n=$('#pnota');if(n){n.classList.toggle('hidden');if(!n.classList.contains('hidden'))n.focus()}});
 on('add-services','click',addSelectedServicesWeb);on('clear-services','click',()=>$('#selected-services').value='');
