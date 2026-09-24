@@ -310,16 +310,17 @@
       const lit=sqlLiteral,ident=sqlIdent;
       const insertRows=(db,table,cols,rows)=>{
         const stmt=db.prepare('INSERT INTO '+table+' ('+cols.map(ident).join(',')+') VALUES ('+cols.map(()=>'?').join(',')+')');
-        db.run('BEGIN;');for(const row of rows)stmt.run(cols.map(k=>row[k]));stmt.free();db.run('COMMIT;');
+        db.run('BEGIN;');for(const row of rows)stmt.run(Array.isArray(row)?row:cols.map(k=>row[k]));stmt.free();db.run('COMMIT;');
       };
+      const validateDb=(db,expected)=>{for(const [table,n] of Object.entries(expected)){const rs=db.exec('SELECT COUNT(*) FROM '+table);const got=Number(rs?.[0]?.values?.[0]?.[0]??-1);if(got!==n)throw new Error('Validación '+table+': esperaba '+n+' y creó '+got)}};
       productDb=new SQL.Database();
       productDb.run('CREATE TABLE "productos" ("SKU" TEXT,"Lista de Productos" TEXT,"CATEGORÍA" TEXT,"TIPO" TEXT,"PAPER/OZ" TEXT,"COLOR" TEXT,"PRODUCTO" TEXT,"PAQUETE DE CAJAS/UNTLS" TEXT,"PESO" TEXT,"ALTURA" TEXT,"Ti" TEXT,"Hi" TEXT,"TiHi" REAL,"DIMENSIONES" TEXT,"Length" TEXT,"Width" TEXT,"Height in" TEXT,"INFORMACIÓN" TEXT,"NOTA" TEXT);');
       productDb.run('CREATE TABLE "clientes" ("ID Cliente" INTEGER PRIMARY KEY AUTOINCREMENT,"ID" TEXT,"Type" TEXT,"Company or Name" TEXT,"ZIP CODE/ADDRESS" TEXT,"Accesories" TEXT,"Costo LD 1er Pallet" TEXT,"Costo LD Extra" TEXT);');
       productDb.run('CREATE TABLE "verificados" ("FECHA" TEXT,"HORA" TEXT,"LISTA DE PRODUCTOS" TEXT,"CANTIDAD" TEXT,"CONFIGURACIÓN VERIFICADA" TEXT,"MEDIO INFORMATIVO" TEXT,"CATEGORÍA" TEXT,"TIPO" TEXT,"PAQUETE DE CAJAS/UND" TEXT,"DIMENSIONES" TEXT,"NOTAS" TEXT,"ESTADO" TEXT DEFAULT '+lit('VIGENTE')+');');
       productDb.run('CREATE TABLE "local_delivery_cost_history" ("ID" INTEGER PRIMARY KEY AUTOINCREMENT,"ID Cliente" INTEGER,"ID CLIENTE CODE" TEXT,"Type" TEXT DEFAULT '+lit('Local Delivery')+',"Company or Name" TEXT NOT NULL,"ZIP CODE/ADDRESS" TEXT NOT NULL,"DATE" TEXT NOT NULL,"Costo LD 1er Pallet" REAL,"Costo LD Extra" REAL);');
-      insertRows(productDb,'"productos"',['SKU','Lista de Productos','CATEGORÍA','TIPO','PAPER/OZ','COLOR','PRODUCTO','PAQUETE DE CAJAS/UNTLS','PESO','ALTURA','Ti','Hi','TiHi','DIMENSIONES','Length','Width','Height in','INFORMACIÓN','NOTA'],products);
-      insertRows(productDb,'"clientes"',['ID Cliente','ID','Type','Company or Name','ZIP CODE/ADDRESS','Accesories','Costo LD 1er Pallet','Costo LD Extra'],customers);
-      insertRows(productDb,'"verificados"',['FECHA','HORA','LISTA DE PRODUCTOS','CANTIDAD','CONFIGURACIÓN VERIFICADA','MEDIO INFORMATIVO','CATEGORÍA','TIPO','PAQUETE DE CAJAS/UND','DIMENSIONES','NOTAS','ESTADO'],verified.map(x=>({...x,status:x.status||'VIGENTE'})));
+      insertRows(productDb,'"productos"',['SKU','Lista de Productos','CATEGORÍA','TIPO','PAPER/OZ','COLOR','PRODUCTO','PAQUETE DE CAJAS/UNTLS','PESO','ALTURA','Ti','Hi','TiHi','DIMENSIONES','Length','Width','Height in','INFORMACIÓN','NOTA'],products.map(r=>[r.sku,r.product_list,r.category,r.product_type,r.paper_oz,r.color,r.product,r.package_units,r.weight,r.height,r.ti,r.hi,r.tihi,r.dimensions,r.length_in,r.width_in,r.height_in,r.information,r.note]));
+      insertRows(productDb,'"clientes"',['ID Cliente','ID','Type','Company or Name','ZIP CODE/ADDRESS','Accesories','Costo LD 1er Pallet','Costo LD Extra'],customers.map(r=>[r.id_cliente,r.id_code,r.type,r.company_name,r.address,r.accessories,r.local_delivery_cost_1,r.local_delivery_cost_extra]));
+      insertRows(productDb,'"verificados"',['FECHA','HORA','LISTA DE PRODUCTOS','CANTIDAD','CONFIGURACIÓN VERIFICADA','MEDIO INFORMATIVO','CATEGORÍA','TIPO','PAQUETE DE CAJAS/UND','DIMENSIONES','NOTAS','ESTADO'],verified.map(r=>[r.date,r.time,r.product_list,r.quantity,r.verified_config,r.information_source,r.category,r.product_type,r.package_units,r.dimensions,r.notes,r.status||'VIGENTE']));
       insertRows(productDb,'"local_delivery_cost_history"',['ID','ID Cliente','ID CLIENTE CODE','Type','Company or Name','ZIP CODE/ADDRESS','DATE','Costo LD 1er Pallet','Costo LD Extra'],ld.map(x=>({ID:x.id,'ID Cliente':x.id_cliente,'ID CLIENTE CODE':x.id_cliente_code,Type:x.type||'Local Delivery','Company or Name':x.company_name,'ZIP CODE/ADDRESS':x.address,DATE:x.date,'Costo LD 1er Pallet':x.cost_1,'Costo LD Extra':x.cost_extra})));
       productDb.run('DELETE FROM sqlite_sequence WHERE name IN ('+lit('clientes')+','+lit('local_delivery_cost_history')+');');
       productDb.run('INSERT INTO sqlite_sequence(name,seq) SELECT '+lit('clientes')+',COALESCE(MAX("ID Cliente"),0) FROM "clientes";');
@@ -343,8 +344,10 @@
 
       rulesDb=new SQL.Database();
       rulesDb.run('CREATE TABLE "reglas" ("ID Regla" INTEGER PRIMARY KEY AUTOINCREMENT,"Estado" TEXT DEFAULT '+lit('ACTIVA')+',"Fecha" TEXT,"Categoría" TEXT,"Criterio de Búsqueda" TEXT,"Descripción" TEXT,"Sede / Ubicación" TEXT,"Modo de Envío" TEXT,"Carriers Permitidos" TEXT,"Umbral UPS (Máx. Cajas)" TEXT,"Revenue" TEXT,"Requiere Validación" TEXT,"NOTA" TEXT);');
-      insertRows(rulesDb,'"reglas"',['ID Regla','Estado','Fecha','Categoría','Criterio de Búsqueda','Descripción','Sede / Ubicación','Modo de Envío','Carriers Permitidos','Umbral UPS (Máx. Cajas)','Revenue','Requiere Validación','NOTA'],rules);
-      rulesDb.run('DELETE FROM sqlite_sequence WHERE name='+lit('reglas')+';');rulesDb.run('INSERT INTO sqlite_sequence(name,seq) SELECT '+lit('reglas')+',COALESCE(MAX("ID Regla"),0) FROM "reglas";');
+      insertRows(rulesDb,'"reglas"',['ID Regla','Estado','Fecha','Categoría','Criterio de Búsqueda','Descripción','Sede / Ubicación','Modo de Envío','Carriers Permitidos','Umbral UPS (Máx. Cajas)','Revenue','Requiere Validación','NOTA'],rules.map(r=>[r.id_regla,r.estado||'ACTIVA',r.fecha,r.categoria,r.criterio_busqueda,r.descripcion,r.sede_ubicacion,r.modo_envio,r.carriers_permitidos,r.umbral_ups,r.revenue,r.requiere_validacion,r.nota]));
+      rulesDb.run('DELETE FROM sqlite_sequence WHERE name='+lit('reglas')+';');rulesDb.run('INSERT INTO sqlite_sequence(name,seq) SELECT '+lit('reglas')+',COALESCE(MAX("ID Regla"),0) FROM "reglas";');validateDb(productDb,{'"productos"':products.length,'"clientes"':customers.length,'"verificados"':verified.length,'"local_delivery_cost_history"':ld.length});
+      validateDb(quoteDb,{'"Data_Base_Quotes"':quotes.length,'"Data_Base_Local_Quotes"':local_quotes.length,'"cotizaciones"':quotes.length+local_quotes.length});
+      validateDb(rulesDb,{'"reglas"':rules.length});
 
       const zip=new JSZip(),stamp=new Date(),ds=stamp.getFullYear()+String(stamp.getMonth()+1).padStart(2,'0')+String(stamp.getDate()).padStart(2,'0')+'_'+String(stamp.getHours()).padStart(2,'0')+String(stamp.getMinutes()).padStart(2,'0')+String(stamp.getSeconds()).padStart(2,'0');
       zip.file('databases/products.db',productDb.export());zip.file('databases/quotes.db',quoteDb.export());zip.file('databases/rules.db',rulesDb.export());
