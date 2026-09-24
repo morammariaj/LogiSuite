@@ -108,7 +108,25 @@ function openBootstrapModal(id,title,bodyHtml,onReady){
 function openDatabase(tab){const names={products:'Productos',customers:'Clientes',verified_configs:'Verificados',rules:'Reglas',local:'Local Delivery',reports:'Reportes',quotes:'DataBase Quotes'};const tabs=Object.keys(names).map(k=>'<button type="button" class="nav-link '+(tab===k?'active':'')+'" data-db-tab="'+k+'">'+names[k]+'</button>').join('');const body='<div class="nav nav-pills gap-2 mb-3 db-tabs">'+tabs+'</div><div id="db-body"></div>';openBootstrapModal('dbModal','Data Base',body,()=>{document.querySelectorAll('[data-db-tab]').forEach(b=>b.onclick=()=>{bootstrap.Modal.getInstance($('#dbModal'))?.hide();setTimeout(()=>openDatabase(b.dataset.dbTab),180)});const box=$('#db-body');if(tab==='local'){box.innerHTML=localView();bindLocal()}else if(tab==='reports'){box.innerHTML=reportsView();bindReports()}else if(tab==='quotes'){box.innerHTML=quotesView();bindQuotes()}else{box.innerHTML=crudView(tab);bindCrud(tab)}});}
 function openReportsModal(){openBootstrapModal('reportsModal','Reportes',reportsView(),()=>bindReports());}
 function openQuotesModal(){openBootstrapModal('quotesModal','View Quotes',quotesView(),()=>bindQuotes());}
-function openExportModal(){const body='<div class="row g-3"><div class="col-md-3"><label class="label">Desde</label><input id="rf2" class="form-control" type="date"></div><div class="col-md-3"><label class="label">Hasta</label><input id="rt2" class="form-control" type="date"></div><div class="col-md-3"><label class="label">Quote</label><input id="rq2" class="form-control"></div><div class="col-md-3"><label class="label">Producto</label><input id="rp2" class="form-control"></div></div><div class="d-flex flex-wrap gap-2 mt-3"><button type="button" class="btn btn-primary" id="export-preview">Vista previa</button><button type="button" class="btn btn-primary" id="export-print">Imprimir / PDF</button><button type="button" class="btn btn-success" id="export-xlsx">📊 Excel</button><button type="button" class="btn btn-outline-primary" id="export-csv">CSV</button></div><div id="export-table" class="table-scroll mt-3"></div>';openBootstrapModal('exportModal','Exportar reportes',body,()=>{const load=async()=>{let rows=[...(await fetchAllRows('quotes','*')),...(await fetchAllRows('local_quotes','*'))];const q=norm($('#rq2').value),p=norm($('#rp2').value),f=$('#rf2').value,t=$('#rt2').value;if(q)rows=rows.filter(x=>norm(x.quote).includes(q));if(p)rows=rows.filter(x=>norm(x.product).includes(p));if(f||t)rows=rows.filter(x=>{const z=String(x.date||'').split('/'),iso=z.length===3?z[2]+'-'+z[1]+'-'+z[0]:x.date;return(!f||iso>=f)&&(!t||iso<=t)});rows.sort((a,b)=>{const key=x=>{const z=String(x||'').split('/');return z.length===3?z[2]+z[1]+z[0]:String(x||'')};return key(b.date).localeCompare(key(a.date))||String(b.quote||'').localeCompare(String(a.quote||''))});$('#export-table').innerHTML='<table class="table table-sm align-middle"><thead><tr><th>DATE</th><th>QUOTE</th><th>COMPANY</th><th>PRODUCT</th><th>QTY</th><th>PLATFORM</th><th>PRICE</th><th>TYPE</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.quote)+'</td><td>'+esc(x.company_name)+'</td><td>'+esc(x.product)+'</td><td>'+x.qty+'</td><td>'+esc(x.better_platform)+'</td><td>$'+num(x.better_shipping_price).toFixed(2)+'</td><td>'+esc(x.type)+'</td></tr>').join('')+'</tbody></table>';return rows};$('#export-preview').onclick=load;$('#export-print').onclick=async()=>withLoading('Preparando PDF…',async()=>{const rows=await load();if(!rows.length)return;const w=window.open('','_blank');if(!w){toast('Ventana de impresión bloqueada',false);return}w.document.write('<html><head><title>LogiSuite Reporte</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#eee}</style></head><body><h2>LogiSuite - Reporte</h2>'+$('#export-table').innerHTML+'</body></html>');w.document.close();w.focus();w.print()};$('#export-xlsx').onclick=async()=>withLoading('Preparando Excel…',async()=>{const rows=await load();if(!rows.length)return;if(!window.XLSX){toast('La librería de Excel no está disponible. Usa CSV.',false);return}const data=rows.map(x=>({DATE:x.date,QUOTE:x.quote,COMPANY:x.company_name,ADDRESS:x.address,TYPE:x.type,SKU:x.sku,PRODUCT:x.product,QTY:x.qty,PRICE_PER_CASE:x.price_per_case,REVENUE:x.revenue,BETTER_PLATFORM:x.better_platform,BETTER_COST:x.better_cost,BETTER_SHIPPING_PRICE:x.better_shipping_price,SERVICES:x.services,NOTA:x.nota}));const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(data);ws['!cols']=[{wch:12},{wch:12},{wch:24},{wch:42},{wch:16},{wch:18},{wch:32},{wch:8},{wch:14},{wch:10},{wch:24},{wch:14},{wch:20},{wch:35},{wch:35}];XLSX.utils.book_append_sheet(wb,ws,'LogiSuite');const out=XLSX.write(wb,{bookType:'xlsx',type:'array'}),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='LogiSuite_Report.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('Excel descargado')};$('#export-csv').onclick=async()=>withLoading('Preparando CSV…',async()=>{const rows=await load();if(!rows.length)return;const cols=['date','quote','company_name','product','qty','better_platform','better_shipping_price','type'];const csv=[cols.join(','),...rows.map(x=>cols.map(k=>'"'+String(x[k]??'').replaceAll('"','""')+'"').join(','))].join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='LogiSuite_Report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('CSV descargado')});});}
+function openExportModal(){
+ const body='<div class="row g-3"><div class="col-md-3"><label class="label">Desde</label><input id="rf2" class="form-control" type="date"></div><div class="col-md-3"><label class="label">Hasta</label><input id="rt2" class="form-control" type="date"></div><div class="col-md-3"><label class="label">Quote</label><input id="rq2" class="form-control"></div><div class="col-md-3"><label class="label">Producto</label><input id="rp2" class="form-control"></div></div><div class="d-flex flex-wrap gap-2 mt-3"><button type="button" class="btn btn-primary" id="export-preview">Vista previa</button><button type="button" class="btn btn-primary" id="export-print">Imprimir / PDF</button><button type="button" class="btn btn-success" id="export-xlsx">📊 Excel</button><button type="button" class="btn btn-outline-primary" id="export-csv">CSV</button></div><div id="export-table" class="table-scroll mt-3"></div>';
+ openBootstrapModal('exportModal','Exportar reportes',body,()=>{
+  const load=async()=>{
+   let rows=[...(await fetchAllRows('quotes','*')),...(await fetchAllRows('local_quotes','*'))];
+   const q=norm($('#rq2').value),p=norm($('#rp2').value),from=$('#rf2').value,to=$('#rt2').value;
+   if(q)rows=rows.filter(x=>norm(x.quote).includes(q));
+   if(p)rows=rows.filter(x=>norm(x.product).includes(p));
+   if(from||to)rows=rows.filter(x=>{const z=String(x.date||'').split('/'),iso=z.length===3?z[2]+'-'+z[1]+'-'+z[0]:x.date;return(!from||iso>=from)&&(!to||iso<=to)});
+   rows.sort((a,b)=>{const key=x=>{const z=String(x||'').split('/');return z.length===3?z[2]+z[1]+z[0]:String(x||'')};return key(b.date).localeCompare(key(a.date))||String(b.quote||'').localeCompare(String(a.quote||''))});
+   $('#export-table').innerHTML='<table class="table table-sm align-middle"><thead><tr><th>DATE</th><th>QUOTE</th><th>COMPANY</th><th>PRODUCT</th><th>QTY</th><th>PLATFORM</th><th>PRICE</th><th>TYPE</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.quote)+'</td><td>'+esc(x.company_name)+'</td><td>'+esc(x.product)+'</td><td>'+x.qty+'</td><td>'+esc(x.better_platform)+'</td><td>$'+num(x.better_shipping_price).toFixed(2)+'</td><td>'+esc(x.type)+'</td></tr>').join('')+'</tbody></table>';
+   return rows;
+  };
+  $('#export-preview').onclick=async()=>{const rows=await load();if(!rows.length)toast('No hay registros para los filtros seleccionados.',false)};
+  $('#export-print').onclick=async()=>{const rows=await load();if(!rows.length)return;const w=window.open('','_blank');if(!w){toast('Ventana de impresión bloqueada',false);return}w.document.write('<html><head><title>LogiSuite Reporte</title><style>body{font-family:Arial;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#eee}</style></head><body><h2>LogiSuite - Reporte</h2>'+$('#export-table').innerHTML+'</body></html>');w.document.close();w.focus();w.print()};
+  $('#export-xlsx').onclick=async()=>{const rows=await load();if(!rows.length)return;if(!window.XLSX){toast('La librería de Excel no está disponible. Usa CSV.',false);return}const data=rows.map(x=>({DATE:x.date,QUOTE:x.quote,COMPANY:x.company_name,ADDRESS:x.address,TYPE:x.type,SKU:x.sku,PRODUCT:x.product,QTY:x.qty,PRICE_PER_CASE:x.price_per_case,REVENUE:x.revenue,BETTER_PLATFORM:x.better_platform,BETTER_COST:x.better_cost,BETTER_SHIPPING_PRICE:x.better_shipping_price,SERVICES:x.services,NOTA:x.nota}));const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(data);ws['!cols']=[{wch:12},{wch:12},{wch:24},{wch:42},{wch:16},{wch:18},{wch:32},{wch:8},{wch:14},{wch:10},{wch:24},{wch:14},{wch:20},{wch:35},{wch:35}];XLSX.utils.book_append_sheet(wb,ws,'LogiSuite');const out=XLSX.write(wb,{bookType:'xlsx',type:'array'}),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='LogiSuite_Report.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('Excel descargado')};
+  $('#export-csv').onclick=async()=>{const rows=await load();if(!rows.length)return;const cols=['date','quote','company_name','product','qty','better_platform','better_shipping_price','type'];const csv=[cols.join(','),...rows.map(x=>cols.map(k=>'"'+String(x[k]??'').replaceAll('"','""')+'"').join(','))].join(String.fromCharCode(10));const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='LogiSuite_Report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('CSV descargado')};
+ });
+}
 function arrangeLocalLayout(){
 const view=$('#view');if(!view)return;
 view.className='quote-layout';
@@ -392,39 +410,22 @@ async function editLocalDelivery(id){
 
 function bindLocal(){const run=async()=>{const {data}=await sb.from('local_delivery_cost_history').select('*').or(`company_name.ilike.%${$('#ldq').value}%,address.ilike.%${$('#ldq').value}%,id_cliente_code.ilike.%${$('#ldq').value}%`).order('id',{ascending:false});$('#ldtable').innerHTML=`<table class="data-table"><thead><tr><th>DATE</th><th>COMPANY</th><th>ADDRESS</th><th>COST 1</th><th>EXTRA</th></tr></thead><tbody>${(data||[]).map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.company_name)}</td><td>${esc(r.address)}</td><td>${r.cost_1}</td><td>${r.cost_extra}</td></tr>`).join('')}</tbody></table>`};$('#ldsearch').onclick=run;run()}
 function reportsView(){
- return `<div class="card modal-content-panel report-panel">
- <div class="report-head"><div><h2 class="section-title">Reportes</h2><div class="muted">Consulta cotizaciones por fecha, rango o número de quote.</div></div></div>
- <div class="report-filters">
-  <label><span class="label">Desde</span><input id="rf" class="input" type="date"></label>
-  <label><span class="label">Hasta</span><input id="rt" class="input" type="date"></label>
-  <label><span class="label">Quote opcional</span><input id="rq" class="input" placeholder="Quote / compañía / producto"></label>
- </div>
- <div class="report-actions">
-  <button class="btn primary" id="rdaily">Reporte diario</button>
-  <button class="btn secondary" id="rrange">Reporte por rango</button>
-  <button class="btn secondary" id="rquotes">Detalle de cotizaciones</button>
-  <button class="btn success" id="rpdf">🖨 PDF</button>
-  <button class="btn success" id="rxlsx">📊 Excel</button>
-  <button class="btn secondary" id="rcsv">CSV</button>
- </div>
- <div id="report-status" class="muted report-status">Selecciona un reporte para comenzar.</div>
- <div id="report-table" class="scroll-x"></div>
- </div>`
+ return '<div class="card modal-content-panel report-panel"><div class="report-head"><div><h2 class="section-title">Reportes</h2><div class="muted">Consulta cotizaciones por fecha, rango o número de quote.</div></div></div><div class="report-filters"><label><span class="label">Desde</span><input id="rf" class="input" type="date"></label><label><span class="label">Hasta</span><input id="rt" class="input" type="date"></label><label><span class="label">Quote opcional</span><input id="rq" class="input" placeholder="Quote / compañía / producto"></label></div><div class="report-actions"><button class="btn primary" id="rdaily">Reporte diario</button><button class="btn secondary" id="rrange">Reporte por rango</button><button class="btn secondary" id="rquotes">Detalle de cotizaciones</button><button class="btn success" id="rpdf">🖨 PDF</button><button class="btn success" id="rxlsx">📊 Excel</button><button class="btn secondary" id="rcsv">CSV</button></div><div id="report-status" class="muted report-status">Selecciona un reporte para comenzar.</div><div id="report-table" class="scroll-x"></div></div>';
 }
 async function bindReports(){
  const normDate=d=>{const x=String(d||'').trim();const p=x.split('/');return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:x};
  const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
  const loadRows=async()=>{
-  let rows=[...(await fetchAllRows('quotes','*')),...(await fetchAllRows('local_quotes','*'))];
+  const rows=[...(await fetchAllRows('quotes','*')),...(await fetchAllRows('local_quotes','*'))];
   const from=$('#rf')?.value||'',to=$('#rt')?.value||'',needle=norm($('#rq')?.value||'');
-  rows=rows.filter(r=>{
+  const filtered=rows.filter(r=>{
    const d=normDate(r.date);
-   const matchDate=(!from||d>=from)&&(!to||d<=to);
-   const matchText=!needle||[r.quote,r.company_name,r.product,r.address,r.sku].some(v=>norm(v).includes(needle));
-   return matchDate&&matchText;
+   const dateOk=(!from||d>=from)&&(!to||d<=to);
+   const textOk=!needle||[r.quote,r.company_name,r.product,r.address,r.sku].some(v=>norm(v).includes(needle));
+   return dateOk&&textOk;
   });
   const seen=new Set(),uniq=[];
-  for(const r of rows){
+  for(const r of filtered){
    const key=String(r.quote_instance_id||'')+'|'+String(r.id_registro||r.id||'');
    if(!seen.has(key)){seen.add(key);uniq.push(r)}
   }
@@ -432,27 +433,38 @@ async function bindReports(){
   return uniq;
  };
  const renderRows=rows=>{
-  $('#report-status').textContent=rows.length?(`${rows.length} registro(s) encontrado(s)`):'No hay registros para los filtros seleccionados.';
-  $('#report-table').innerHTML='<table class="data-table"><thead><tr><th>DATE</th><th>QUOTE</th><th>COMPANY</th><th>PRODUCT</th><th>QTY</th><th>PLATFORM</th><th>PRICE</th><th>TYPE</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r.date||'')+'</td><td>'+esc(r.quote||'')+'</td><td>'+esc(r.company_name||'')+'</td><td>'+esc(r.product||'')+'</td><td>'+esc(r.qty??'')+'</td><td>'+esc(r.better_platform||'')+'</td><td>$'+num(r.better_shipping_price).toFixed(2)+'</td><td>'+esc(r.type||'')+'</td></tr>').join('')+'</tbody></table>';
+  const status=$('#report-status');if(status)status.textContent=rows.length?rows.length+' registro(s) encontrado(s)':'No hay registros para los filtros seleccionados.';
+  const box=$('#report-table');if(!box)return;
+  box.innerHTML='<table class="data-table"><thead><tr><th>DATE</th><th>QUOTE</th><th>COMPANY</th><th>PRODUCT</th><th>QTY</th><th>PLATFORM</th><th>PRICE</th><th>TYPE</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r.date||'')+'</td><td>'+esc(r.quote||'')+'</td><td>'+esc(r.company_name||'')+'</td><td>'+esc(r.product||'')+'</td><td>'+esc(r.qty??'')+'</td><td>'+esc(r.better_platform||'')+'</td><td>$'+num(r.better_shipping_price).toFixed(2)+'</td><td>'+esc(r.type||'')+'</td></tr>').join('')+'</tbody></table>';
  };
- const run=async(kind)=>withLoading(kind==='daily'?'Generando reporte diario…':kind==='range'?'Generando reporte por rango…':'Generando detalle de cotizaciones…',async()=>{
+ const run=async(kind)=>{
   try{
    if(!sb){toast('Supabase no está disponible',false);return}
    if(kind==='daily'){const d=todayISO();$('#rf').value=d;$('#rt').value=d}
-   if(kind==='range'&&!$('#rf').value&&!$('#rt').value){$('#rf').value=todayISO();$('#rt').value=todayISO()}
+   if(kind==='range'&&!$('#rf').value&&!$('#rt').value){const d=todayISO();$('#rf').value=d;$('#rt').value=d}
    if($('#rf').value&&$('#rt').value&&$('#rf').value>$('#rt').value){toast('La fecha Desde no puede ser posterior a Hasta',false);return}
-   const rows=await loadRows();renderRows(rows);
-  }catch(e){console.error(e);$('#report-status').textContent='Error al generar el reporte: '+e.message;toast('No se pudo generar el reporte: '+e.message,false)}
+   renderRows(await loadRows());
+  }catch(e){console.error(e);const st=$('#report-status');if(st)st.textContent='Error al generar el reporte: '+e.message;toast('No se pudo generar el reporte: '+e.message,false)}
  };
- const downloadRows=async()=>{const rows=await loadRows();if(!rows.length){renderRows(rows);return []}return rows};
+ const downloadRows=async()=>{const rows=await loadRows();renderRows(rows);return rows};
  const printRows=async()=>{
   const rows=await downloadRows();if(!rows.length)return;
   const w=window.open('','_blank');if(!w){toast('Ventana de impresión bloqueada',false);return}
-  const body='<h2>LogiSuite - Reporte</h2><table border="1" cellspacing="0" cellpadding="6" style="width:100%;border-collapse:collapse"><thead><tr><th>DATE</th><th>QUOTE</th><th>COMPANY</th><th>PRODUCT</th><th>QTY</th><th>PLATFORM</th><th>PRICE</th><th>TYPE</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r.date||'')+'</td><td>'+esc(r.quote||'')+'</td><td>'+esc(r.company_name||'')+'</td><td>'+esc(r.product||'')+'</td><td>'+esc(r.qty??'')+'</td><td>'+esc(r.better_platform||'')+'</td><td>$'+num(r.better_shipping_price).toFixed(2)+'</td><td>'+esc(r.type||'')+'</td></tr>').join('')+'</tbody></table>';
-  w.document.write('<html><head><title>LogiSuite Reporte</title><style>body{font-family:Arial;padding:22px;font-size:12px}h2{margin-bottom:16px}th{background:#eee;text-align:left}th,td{border:1px solid #ccc}</style></head><body>'+body+'</body></html>');w.document.close();w.focus();w.print();
+  w.document.write('<html><head><title>LogiSuite Reporte</title><style>body{font-family:Arial;padding:22px;font-size:12px}th{background:#eee;text-align:left}th,td{border:1px solid #ccc;padding:6px}</style></head><body><h2>LogiSuite - Reporte</h2>'+$('#report-table').innerHTML+'</body></html>');
+  w.document.close();w.focus();w.print();
  };
- const xlsx=async()=>{const rows=await downloadRows();if(!rows.length)return;if(!window.XLSX){toast('Excel no está disponible. Usa CSV.',false);return}const data=rows.map(r=>({DATE:r.date,QUOTE:r.quote,COMPANY:r.company_name,ADDRESS:r.address,TYPE:r.type,SKU:r.sku,PRODUCT:r.product,QTY:r.qty,PRICE_PER_CASE:r.price_per_case,REVENUE:r.revenue,BETTER_PLATFORM:r.better_platform,BETTER_COST:r.better_cost,BETTER_SHIPPING_PRICE:r.better_shipping_price,SERVICES:r.services,NOTA:r.nota}));const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(data);XLSX.utils.book_append_sheet(wb,ws,'LogiSuite');const out=XLSX.write(wb,{bookType:'xlsx',type:'array'}),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='LogiSuite_Report.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('Excel descargado')};
- const csv=async()=>{const rows=await downloadRows();if(!rows.length)return;const cols=['date','quote','company_name','address','type','sku','product','qty','price_per_case','revenue','better_platform','better_cost','better_shipping_price','services','nota'];const out=[cols.join(','),...rows.map(r=>cols.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(','))].join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'text/csv;charset=utf-8'}));a.download='LogiSuite_Report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('CSV descargado')};
+ const xlsx=async()=>{
+  const rows=await downloadRows();if(!rows.length)return;if(!window.XLSX){toast('Excel no está disponible. Usa CSV.',false);return}
+  const data=rows.map(r=>({DATE:r.date,QUOTE:r.quote,COMPANY:r.company_name,ADDRESS:r.address,TYPE:r.type,SKU:r.sku,PRODUCT:r.product,QTY:r.qty,PRICE_PER_CASE:r.price_per_case,REVENUE:r.revenue,BETTER_PLATFORM:r.better_platform,BETTER_COST:r.better_cost,BETTER_SHIPPING_PRICE:r.better_shipping_price,SERVICES:r.services,NOTA:r.nota}));
+  const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(data);XLSX.utils.book_append_sheet(wb,ws,'LogiSuite');
+  const out=XLSX.write(wb,{bookType:'xlsx',type:'array'}),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));a.download='LogiSuite_Report.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('Excel descargado');
+ };
+ const csv=async()=>{
+  const rows=await downloadRows();if(!rows.length)return;
+  const cols=['date','quote','company_name','address','type','sku','product','qty','price_per_case','revenue','better_platform','better_cost','better_shipping_price','services','nota'];
+  const out=[cols.join(','),...rows.map(r=>cols.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(','))].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([out],{type:'text/csv;charset=utf-8'}));a.download='LogiSuite_Report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);toast('CSV descargado');
+ };
  $('#rdaily').onclick=()=>run('daily');$('#rrange').onclick=()=>run('range');$('#rquotes').onclick=()=>run('quotes');$('#rpdf').onclick=printRows;$('#rxlsx').onclick=xlsx;$('#rcsv').onclick=csv;
 }
 async function login(){
