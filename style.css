@@ -568,3 +568,88 @@ input,select,textarea,.input,.select,.textarea,.form-control,.form-select{width:
   .product-main-grid{grid-template-columns:1fr!important}
   .product-main-grid .product-name{grid-column:auto!important}
 }
+
+/* ===== Final polish on top of the restored desktop-reference layout ===== */
+.embedded-service #services{
+  display:block!important;
+  max-height:190px!important;
+  overflow:auto!important;
+  margin:0!important;
+  padding:2px 2px 2px 0!important;
+}
+.embedded-service #services .pill{
+  width:100%!important;
+  display:grid!important;
+  grid-template-columns:18px minmax(0,1fr)!important;
+  align-items:center!important;
+  gap:7px!important;
+  margin:3px 0!important;
+  padding:5px 7px!important;
+  border:1px solid var(--ls-border)!important;
+  border-radius:8px!important;
+  background:var(--ls-surface)!important;
+  text-align:left!important;
+}
+.embedded-service #services .pill input{width:auto!important;margin:0!important}
+.embedded-service #clear-services{
+  display:inline-flex!important;
+  width:auto!important;
+  max-width:140px!important;
+  min-width:105px!important;
+  margin-top:7px!important;
+  padding:7px 14px!important;
+}
+.embedded-service #add-services{
+  display:block!important;
+  width:100%!important;
+  min-height:36px!important;
+  margin-top:7px!important;
+}
+.modal{
+  z-index:2060!important;
+}
+.modal-backdrop{
+  z-index:2050!important;
+}
+.modal-backdrop.show{
+  opacity:.55!important;
+}
+.modal-dialog{
+  z-index:2061!important;
+}
+.modal-content{
+  z-index:2062!important;
+  max-height:calc(100vh - 24px)!important;
+}
+.modal-header{
+  flex:0 0 auto!important;
+}
+.modal-dialog-scrollable .modal-body{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+.modal-body>.card{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+}
+.db-panel .data-table td:last-child,
+.quotes-panel .data-table td:last-child{
+  white-space:nowrap!important;
+}
+.db-panel .data-table td:last-child .btn,
+.quotes-panel .quote-actions .btn{
+  font-size:11px!important;
+  padding:6px 9px!important;
+  margin:0 2px 0 0!important;
+}
+@media(min-width:1001px){
+  .quote-columns{grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr)!important}
+  .area-general .grid.g3{grid-template-columns:115px minmax(0,1fr) 60px!important}
+  .area-customer .grid.g3{grid-template-columns:120px minmax(0,1.1fr) minmax(0,2fr)!important}
+}
+@media(max-width:760px){
+  .embedded-service #services .pill{grid-template-columns:18px minmax(0,1fr)!important}
+  .db-panel .data-table td:last-child{white-space:normal!important}
+}
