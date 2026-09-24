@@ -1745,3 +1745,73 @@ body[data-bs-theme=dark] select option:focus{
   background:#352d40!important;
   color:#fff!important;
 }
+
+/* ===== v36: equal Customer fields + auto-growing address ===== */
+.area-customer .customer-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr)) 40px!important;
+  gap:10px!important;
+  align-items:start!important;
+}
+.area-customer .customer-grid>label{
+  min-width:0!important;
+  max-width:100%!important;
+}
+.area-customer .customer-grid #qtype,
+.area-customer .customer-grid #qcompany,
+.area-customer .customer-grid #qaddress{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  height:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:8px 10px!important;
+  line-height:20px!important;
+}
+.area-customer .customer-grid #qaddress{
+  height:38px!important;
+  min-height:38px!important;
+  max-height:180px!important;
+  resize:none!important;
+  overflow-y:hidden!important;
+  white-space:pre-wrap!important;
+}
+.area-customer .customer-save-wrap{
+  width:40px!important;
+  min-width:40px!important;
+  max-width:40px!important;
+  height:38px!important;
+  min-height:38px!important;
+  display:flex!important;
+  align-items:stretch!important;
+  justify-content:stretch!important;
+  margin-top:0!important;
+}
+.area-customer .customer-save-wrap #save-cust{
+  width:40px!important;
+  min-width:40px!important;
+  height:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+}
+@media(max-width:1000px) and (min-width:761px){
+  .area-customer .customer-grid{
+    grid-template-columns:minmax(120px,1fr) minmax(180px,1fr) minmax(220px,1fr) 40px!important;
+    gap:8px!important;
+  }
+}
+@media(max-width:760px){
+  .area-customer .customer-grid{
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  .area-customer .customer-save-wrap,
+  .area-customer .customer-save-wrap #save-cust{
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    height:40px!important;
+    min-height:40px!important;
+  }
+}
