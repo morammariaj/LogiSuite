@@ -1198,3 +1198,207 @@ body.modal-open>.modal{z-index:2060!important}
   }
   .local-panel>.row{grid-template-columns:1fr!important}
 }
+
+/* ===== v29: actual modal inset + customer row alignment + spreadsheet spacing ===== */
+
+/* Override the older .modal-body>.card{padding:0} rule with higher specificity. */
+.modal-body > .modal-content-panel,
+.modal-body > #db-body > .modal-content-panel{
+  box-sizing:border-box!important;
+  padding:22px 24px 24px!important;
+  margin:0!important;
+  border:1px solid var(--ls-border)!important;
+  border-radius:14px!important;
+  background:var(--ls-card)!important;
+  overflow:hidden!important;
+}
+.modal-body > .modal-content-panel > .between{
+  margin:0 0 18px!important;
+  padding:0!important;
+}
+.modal-body > .modal-content-panel > .section-title{
+  margin:0 0 14px!important;
+}
+.modal-body > #db-body{
+  padding:0!important;
+  margin:0!important;
+}
+.modal-body > .db-tabs{
+  margin:0 0 16px!important;
+  padding:0 2px!important;
+}
+.modal-content-panel .scroll-x,
+.modal-content-panel .table-responsive-logi{
+  margin-top:10px!important;
+}
+.modal-content-panel > .between .row{
+  gap:9px!important;
+}
+.crud-panel>.between>.row{
+  grid-template-columns:minmax(200px,280px) 110px!important;
+  width:min(398px,100%)!important;
+}
+.quotes-panel>.between>.row{
+  grid-template-columns:minmax(190px,1.4fr) minmax(145px,1fr) minmax(145px,1fr) 96px!important;
+  width:min(720px,100%)!important;
+}
+.crud-panel #crud-new{
+  width:110px!important;
+  height:38px!important;
+}
+.quotes-panel #search-quotes{
+  width:96px!important;
+  height:38px!important;
+}
+
+/* Customer section: all three fields aligned, save icon belongs to Company field. */
+.area-customer .customer-grid{
+  display:grid!important;
+  grid-template-columns:minmax(120px,1fr) minmax(220px,1.8fr) minmax(280px,3fr)!important;
+  gap:10px!important;
+  align-items:end!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.area-customer .customer-grid>label{min-width:0!important;margin:0!important}
+.area-customer .customer-input-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 38px!important;
+  gap:7px!important;
+  align-items:end!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.area-customer .customer-input-row .input{
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+.area-customer #save-cust{
+  width:38px!important;
+  height:38px!important;
+  min-width:38px!important;
+  padding:0!important;
+  margin:0!important;
+  border-radius:9px!important;
+  display:grid!important;
+  place-items:center!important;
+  align-self:end!important;
+}
+.area-customer .customer-company-field .suggestions{
+  left:0!important;
+  right:45px!important;
+  top:calc(100% + 3px)!important;
+}
+.area-customer .customer-grid .label{
+  margin-bottom:6px!important;
+}
+.area-customer .customer-grid .input,
+.area-customer .customer-grid .select,
+.area-customer .customer-grid .textarea{
+  margin-bottom:0!important;
+}
+
+/* Service buttons share one exact vertical stack. */
+.area-carriers .service-actions{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:8px!important;
+  width:100%!important;
+  max-width:100%!important;
+  margin:8px 0 0!important;
+}
+.area-carriers .service-actions #clear-services,
+.area-carriers .service-actions #add-services{
+  display:flex!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  height:40px!important;
+  min-height:40px!important;
+  margin:0!important;
+  padding:8px 14px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:8px!important;
+  line-height:1!important;
+  font-size:13px!important;
+  font-weight:700!important;
+}
+.area-carriers .service-actions #clear-services{
+  background:#ea4335!important;
+  border:1px solid #ea4335!important;
+  color:#fff!important;
+}
+.area-carriers .service-actions #add-services{
+  background:#1f8f3f!important;
+  border:1px solid #1f8f3f!important;
+  color:#fff!important;
+}
+
+/* Bottom save/update actions have real separation. */
+.action-bar #save-slot{
+  display:flex!important;
+  align-items:center!important;
+  gap:12px!important;
+}
+.action-bar #save-slot .btn{
+  margin:0!important;
+  min-width:150px!important;
+}
+.action-bar{gap:9px!important}
+
+/* Table action buttons stay compact and centered. */
+.icon-action{
+  width:34px!important;
+  min-width:34px!important;
+  height:34px!important;
+  margin:0 2px!important;
+  padding:0!important;
+}
+.quote-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:4px!important;
+  flex-wrap:nowrap!important;
+}
+
+/* Mobile keeps the same breathing room. */
+@media(max-width:900px){
+  .modal-body > .modal-content-panel,
+  .modal-body > #db-body > .modal-content-panel{
+    padding:16px!important;
+  }
+  .area-customer .customer-grid{
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  .area-customer .customer-input-row{
+    grid-template-columns:minmax(0,1fr) 38px!important;
+  }
+  .crud-panel>.between>.row,
+  .quotes-panel>.between>.row{
+    grid-template-columns:1fr!important;
+    width:100%!important;
+  }
+  .crud-panel #crud-new,
+  .quotes-panel #search-quotes{
+    width:100%!important;
+    min-width:0!important;
+  }
+  .action-bar #save-slot{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    width:100%!important;
+    gap:9px!important;
+  }
+}
+@media(max-width:520px){
+  .modal-body > .modal-content-panel,
+  .modal-body > #db-body > .modal-content-panel{
+    padding:13px!important;
+  }
+  .action-bar #save-slot{grid-template-columns:1fr!important}
+}
