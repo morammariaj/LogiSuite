@@ -93,3 +93,18 @@ input,select,textarea,.input,.select,.textarea,.form-control,.form-select{width:
 
 /* Login uses a real IMG; disable the legacy pseudo-logo to avoid duplication. */
 .login-card:before{content:none!important;display:none!important;background:none!important;box-shadow:none!important;width:0!important;height:0!important;margin:0!important}
+
+/* Final pallet toolbar and action bar repair */
+.area-cubic>.grid.g4:first-of-type{grid-template-columns:minmax(190px,1.45fr) minmax(150px,1fr) auto auto!important;align-items:end!important;gap:10px!important}
+.area-cubic>.grid.g4:first-of-type>.row{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important}
+.area-cubic>.grid.g4:first-of-type>.row .btn{width:auto!important;min-width:105px!important;white-space:nowrap!important}
+.area-cubic>.grid.g4:first-of-type>.pill{align-self:end!important;white-space:nowrap!important}
+#pallets{overflow-x:auto!important;overflow-y:visible!important;border:1px solid var(--ls-border);border-radius:10px;padding:7px;background:var(--ls-surface)}
+.cubic-head{min-width:720px;padding:0 4px}
+.pallet-row{min-width:720px!important}
+.action-bar{position:relative!important;display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:7px!important;clear:both!important;overflow:visible!important}
+.action-bar .btn,.action-bar button{display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;position:relative!important;z-index:2!important}
+.action-bar #save-slot{display:inline-flex!important;align-items:center!important}
+.action-bar #save-slot .btn{display:inline-flex!important}
+@media(max-width:1100px){.area-cubic>.grid.g4:first-of-type{grid-template-columns:1.4fr 1fr auto auto!important}}
+@media(max-width:760px){.area-cubic>.grid.g4:first-of-type{grid-template-columns:1fr!important;align-items:stretch!important}.area-cubic>.grid.g4:first-of-type>.row{width:100%!important}.area-cubic>.grid.g4:first-of-type>.row .btn{flex:1!important}.area-cubic>.grid.g4:first-of-type>.pill{justify-self:start!important}.action-bar{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}.action-bar .action-spacer{display:none!important}.action-bar #save-slot{width:100%!important}.action-bar #save-slot .btn{width:100%!important}}
