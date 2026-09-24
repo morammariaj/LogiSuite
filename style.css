@@ -1815,3 +1815,32 @@ body[data-bs-theme=dark] select option:focus{
     min-height:40px!important;
   }
 }
+
+/* ===== v37: align customer save button with field controls ===== */
+.area-customer .customer-save-wrap{
+  height:62px!important;
+  min-height:62px!important;
+  padding-top:24px!important;
+  box-sizing:border-box!important;
+  align-items:flex-start!important;
+  justify-content:flex-end!important;
+}
+.area-customer .customer-save-wrap #save-cust{
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  margin:0!important;
+}
+@media(max-width:760px){
+  .area-customer .customer-save-wrap{
+    height:40px!important;
+    min-height:40px!important;
+    padding-top:0!important;
+    align-items:stretch!important;
+  }
+  .area-customer .customer-save-wrap #save-cust{
+    height:40px!important;
+    min-height:40px!important;
+    max-height:40px!important;
+  }
+}
