@@ -1708,3 +1708,40 @@ body.modal-open>.modal{z-index:2060!important}
     height:40px!important;
   }
 }
+
+/* ===== v35: dark-mode selection / hover normalization ===== */
+body[data-bs-theme=dark] table tr:hover td,
+body[data-bs-theme=dark] .data-table tbody tr:hover td,
+body[data-bs-theme=dark] .table tbody tr:hover td{
+  background:#2a2531!important;
+  color:#f2edf8!important;
+}
+body[data-bs-theme=dark] .data-table tbody tr.table-active td,
+body[data-bs-theme=dark] .data-table tbody tr.selected td,
+body[data-bs-theme=dark] .table tbody tr.table-active td,
+body[data-bs-theme=dark] .table tbody tr.selected td{
+  background:#352d40!important;
+  color:#f2edf8!important;
+}
+body[data-bs-theme=dark] .data-table tbody tr:focus-within td,
+body[data-bs-theme=dark] .table tbody tr:focus-within td{
+  background:#302938!important;
+}
+body[data-bs-theme=dark] ::selection{
+  background:#6d5aa8!important;
+  color:#fff!important;
+}
+body[data-bs-theme=dark] input::selection,
+body[data-bs-theme=dark] textarea::selection{
+  background:#6d5aa8!important;
+  color:#fff!important;
+}
+body[data-bs-theme=dark] option:checked{
+  background:#6d5aa8!important;
+  color:#fff!important;
+}
+body[data-bs-theme=dark] select option:hover,
+body[data-bs-theme=dark] select option:focus{
+  background:#352d40!important;
+  color:#fff!important;
+}
