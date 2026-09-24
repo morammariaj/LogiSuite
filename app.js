@@ -1,10 +1,10 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const createClient=window.supabase?.createClient;
 const C=window.LOGISUITE_CONFIG||{}; const ready=C.SUPABASE_URL&&C.SUPABASE_URL.includes('supabase.co')&&!String(C.SUPABASE_URL).includes('YOUR_')&&C.SUPABASE_PUBLISHABLE_KEY&&!String(C.SUPABASE_PUBLISHABLE_KEY).includes('YOUR_');
-const sb=ready?createClient(C.SUPABASE_URL,C.SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+const sb=ready&&typeof createClient==='function'?createClient(C.SUPABASE_URL,C.SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const num=x=>{const n=parseFloat(String(x??'').replace(/[$,]/g,''));return Number.isFinite(n)?n:0};
 const norm=x=>String(x??'').trim().toUpperCase().replace(/\s+/g,' '); const localType=t=>norm(t)==='LOCAL DELIVERY'||norm(t).includes('LOCAL');
-const state={session:null,tab:'quote',dark:false,products:[],customers:[],verified:[],rules:[],cart:[],edit:null,selectedCustomer:null,selectedProduct:null,online:navigator.onLine,pending:[]};
+const state={session:null,tab:'quote',dark:false,products:[],customers:[],verified:[],rules:[],cart:[],edit:null,selectedCustomer:null,selectedProduct:null,online:navigator.onLine,pending:[],installPrompt:null};
 const services=['Airport','Commercial','Construction','Container Freight Station','Distribution Center','Dock/Pier','Government Facility','Limited Access','Residential/Non-Commercial','Secure Access','Tradeshow/Convention','Inside Delivery','Liftgate Delivery','Residential Delivery','Tradeshow Delivery','Construction Site Delivery','Notify Me Before Delivery','Hold Shipment at Terminal','Appointment Delivery','Airport Pickup','Commercial Pickup','Construction Pickup','CFS Pickup','Distribution Center Pickup','Dock/Pier Pickup','Government Facility Pickup','Limited Access Pickup','Residential/Non-Commercial Pickup','Secure Access Pickup','Tradeshow/Convention Pickup','Inside Pickup','Liftgate Pickup','Residential Pickup','Tradeshow Pickup','Construction Site Pickup','Drop Shipment at Terminal','Sort and Segregate','Protect from Freeze'];
 const carriers=['AAA Cooper','Estes','Southeastern','TForce','Others'];
 function toast(m,good=true){const t=$('#toast');t.textContent=m;t.className='toast '+(good?'good':'bad');t.style.cssText='position:fixed;right:18px;bottom:18px;background:'+(good?'#137333':'#d93025')+';color:#fff;padding:11px 14px;border-radius:10px;z-index:3000;box-shadow:0 8px 30px rgba(0,0,0,.25)';setTimeout(()=>t.textContent='',2800)}
@@ -66,7 +66,47 @@ async function logout(){await sb?.auth.signOut();state.session=null;login()}
 async function start(session){state.session=session;await bootstrap();render()}
 async function bootstrap(){if(!sb)return;try{const [p,c,v,r]=await Promise.all([sb.from('products').select('*').order('product_list'),sb.from('customers').select('*').order('company_name').order('address'),sb.from('verified_configs').select('*').order('id',{ascending:false}),sb.from('rules').select('*').order('id_regla')]);if(p.error||c.error||v.error||r.error)throw new Error('offline');state.products=p.data||[];state.customers=c.data||[];state.verified=v.data||[];state.rules=r.data||[];localStorage.setItem('logisuite-cache',JSON.stringify({products:state.products,customers:state.customers,verified:state.verified,rules:state.rules}));}catch(e){try{const x=JSON.parse(localStorage.getItem('logisuite-cache')||'{}');state.products=x.products||[];state.customers=x.customers||[];state.verified=x.verified||[];state.rules=x.rules||[];}catch(_){}}window.addEventListener('online',async()=>{state.online=true;render();await syncPending()});window.addEventListener('offline',()=>{state.online=false;render()})}
 async function syncPending(){const pending=JSON.parse(localStorage.getItem('logisuite-pending')||'[]');if(!pending.length||!sb||!navigator.onLine)return;const rest=[];for(const x of pending){try{const {error}=await sb.from(x.table).insert(x.rows);if(error)rest.push(x)}catch(e){rest.push(x)}}localStorage.setItem('logisuite-pending',JSON.stringify(rest));if(!rest.length)toast('Cambios offline sincronizados')}
-function showChangePassword(){const m=document.createElement('div');m.className='modal-back';m.innerHTML=`<div class="modal" style="max-width:430px"><div class="between"><h2>Cambiar contraseña</h2><button class="btn secondary close">Cerrar</button></div><label><span class="label">Nueva contraseña</span><input id="cp1" class="input" type="password"></label><label style="display:block;margin-top:10px"><span class="label">Repetir contraseña</span><input id="cp2" class="input" type="password"></label><div id="cpm" class="muted" style="margin:10px 0"></div><button class="btn success" id="cps">Guardar</button></div>`;document.body.appendChild(m);m.querySelector('.close').onclick=()=>m.remove();m.querySelector('#cps').onclick=async()=>{const a=m.querySelector('#cp1').value,b=m.querySelector('#cp2').value;if(a!==b){m.querySelector('#cpm').textContent='Las contraseñas no coinciden';return}const {error}=await sb.auth.updateUser({password:a});m.querySelector('#cpm').textContent=error?error.message:'Contraseña actualizada';if(!error)setTimeout(()=>m.remove(),900)}}
-async function init(){if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});if(!sb){login();return}const {data}=await sb.auth.getSession();if(data.session)start(data.session);else login();sb.auth.onAuthStateChange((e,s)=>{if(e==='SIGNED_OUT')login();if(e==='PASSWORD_RECOVERY')showReset()});if(location.hash==='#reset')showReset()}
+
+function isStandalone(){return window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true||document.referrer.startsWith('android-app://')}
+function isMobileOrTablet(){const ua=navigator.userAgent||'';const touch=navigator.maxTouchPoints||0;return /Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(ua)||(touch>1&&Math.min(screen.width,screen.height)<=1024)}
+function setupInstallInvite(){
+  const show=()=>{
+    if(!isMobileOrTablet()||isStandalone())return;
+    let box=document.getElementById('install-invite');
+    if(!box){
+      box=document.createElement('div');box.id='install-invite';box.className='install-invite';
+      box.innerHTML='<div class="install-icon"><img src="icon-192.svg" alt="" /></div><div class="install-copy"><b>Instala LogiSuite</b><span id="install-text">Ten tus cotizaciones siempre a mano, como una app.</span></div><button id="install-now" class="btn primary">Instalar</button><button id="install-close" class="install-close" aria-label="Cerrar">×</button>';
+      document.body.appendChild(box);
+      box.querySelector('#install-close').onclick=()=>box.remove();
+      box.querySelector('#install-now').onclick=installApp;
+    }
+    const btn=box.querySelector('#install-now'),txt=box.querySelector('#install-text');
+    if(/iPhone|iPad|iPod/i.test(navigator.userAgent)){
+      txt.textContent='En Safari: toca Compartir → Agregar a pantalla de inicio.';
+      btn.textContent='Cómo instalar';
+      btn.onclick=()=>alert('En Safari toca Compartir y luego “Agregar a pantalla de inicio”.');
+    }else if(state.installPrompt){
+      btn.textContent='Instalar';
+      btn.onclick=installApp;
+    }else{
+      btn.textContent='Instalar';
+      btn.onclick=()=>alert('Cuando Chrome muestre la opción de instalación, toca “Instalar app”.');
+    }
+  };
+  if(!isStandalone())setTimeout(show,900);
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.installPrompt=e;show()});
+  window.addEventListener('appinstalled',()=>{state.installPrompt=null;document.getElementById('install-invite')?.remove();toast('LogiSuite instalada correctamente')});
+}
+async function installApp(){
+  if(!state.installPrompt){
+    if(/iPhone|iPad|iPod/i.test(navigator.userAgent)){alert('En Safari toca Compartir y luego “Agregar a pantalla de inicio”.');return}
+    toast('La opción de instalación aparecerá cuando el navegador la habilite.',false);return;
+  }
+  const p=state.installPrompt;state.installPrompt=null;
+  try{await p.prompt();await p.userChoice}catch(_){}
+  document.getElementById('install-invite')?.remove();
+}
+\nfunction showChangePassword(){const m=document.createElement('div');m.className='modal-back';m.innerHTML=`<div class="modal" style="max-width:430px"><div class="between"><h2>Cambiar contraseña</h2><button class="btn secondary close">Cerrar</button></div><label><span class="label">Nueva contraseña</span><input id="cp1" class="input" type="password"></label><label style="display:block;margin-top:10px"><span class="label">Repetir contraseña</span><input id="cp2" class="input" type="password"></label><div id="cpm" class="muted" style="margin:10px 0"></div><button class="btn success" id="cps">Guardar</button></div>`;document.body.appendChild(m);m.querySelector('.close').onclick=()=>m.remove();m.querySelector('#cps').onclick=async()=>{const a=m.querySelector('#cp1').value,b=m.querySelector('#cp2').value;if(a!==b){m.querySelector('#cpm').textContent='Las contraseñas no coinciden';return}const {error}=await sb.auth.updateUser({password:a});m.querySelector('#cpm').textContent=error?error.message:'Contraseña actualizada';if(!error)setTimeout(()=>m.remove(),900)}}
+async function init(){setupInstallInvite();if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});if(!sb){login();return}const {data}=await sb.auth.getSession();if(data.session)start(data.session);else login();sb.auth.onAuthStateChange((e,s)=>{if(e==='SIGNED_OUT')login();if(e==='PASSWORD_RECOVERY')showReset()});if(location.hash==='#reset')showReset()}
 function showReset(){const m=document.createElement('div');m.className='modal-back';m.innerHTML=`<div class="modal" style="max-width:420px"><h2>Cambiar contraseña</h2><label><span class="label">Nueva contraseña</span><input id="np" class="input" type="password"></label><label style="display:block;margin-top:10px"><span class="label">Repetir contraseña</span><input id="np2" class="input" type="password"></label><div id="nm" class="muted" style="margin:10px 0"></div><button class="btn success" id="nps">Guardar</button></div>`;document.body.appendChild(m);m.querySelector('#nps').onclick=async()=>{if($('#np').value!==$('#np2').value){$('#nm').textContent='Las contraseñas no coinciden';return}const {error}=await sb.auth.updateUser({password:$('#np').value});$('#nm').textContent=error?error.message:'Contraseña actualizada correctamente';if(!error)setTimeout(()=>m.remove(),1000)}}
 init();
