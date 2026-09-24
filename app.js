@@ -1,6 +1,6 @@
 const createClient=window.supabase?.createClient;
 const C=window.LOGISUITE_CONFIG||{}; const ready=C.SUPABASE_URL&&C.SUPABASE_URL.includes('supabase.co')&&!String(C.SUPABASE_URL).includes('YOUR_')&&C.SUPABASE_PUBLISHABLE_KEY&&!String(C.SUPABASE_PUBLISHABLE_KEY).includes('YOUR_');
-const sb=ready&&typeof createClient==='function'?createClient(C.SUPABASE_URL,C.SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
+const sb=ready&&typeof createClient==='function'?createClient(C.SUPABASE_URL,C.SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null; window.logiSupabase=sb;
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const num=x=>{const n=parseFloat(String(x??'').replace(/[$,]/g,''));return Number.isFinite(n)?n:0};
 const norm=x=>String(x??'').trim().toUpperCase().replace(/\s+/g,' '); const localType=t=>norm(t)==='LOCAL DELIVERY'||norm(t).includes('LOCAL');
