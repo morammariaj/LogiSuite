@@ -212,14 +212,60 @@ function showProductFicha(p){
  });
 }
 function editCrud(kind,row){
-const fields={products:['sku','product_list','category','product_type','paper_oz','color','product','package_units','weight','height','ti','hi','tihi','dimensions','length_in','width_in','height_in','information','note'],customers:['id_code','type','company_name','address','accessories','local_delivery_cost_1','local_delivery_cost_extra'],verified_configs:['date','time','product_list','quantity','verified_config','information_source','category','product_type','package_units','dimensions','notes','status'],rules:['estado','fecha','categoria','criterio_busqueda','descripcion','sede_ubicacion','modo_envio','carriers_permitidos','umbral_ups','revenue','requiere_validacion','nota']}[kind];
-if(!fields){toast('Tipo de registro no soportado',false);return}
-const body='<div class="crud-form-grid">'+fields.map(f=>'<label><span class="label">'+esc(f)+'</span><input class="input" data-f="'+esc(f)+'" value="'+esc(row?.[f]??'')+'"></label>').join('')+'</div><div class="panel-actions"><button class="btn success" id="crud-save" type="button">Guardar</button></div>';
-openBootstrapModal('crudEditModal',(row?'Editar':'Nuevo')+' '+esc(kind),body,()=>{
- const modal=$('#crudEditModal');
- const val=f=>modal.querySelector('[data-f="'+CSS.escape(f)+'"]');modal.querySelector('.close').onclick=()=>modal.remove();if(kind==='products'){['sku','product_list','tihi','dimensions'].forEach(f=>{if(val(f))val(f).readOnly=true});const recalc=()=>{const cat=val('category')?.value.trim()||'',tipo=val('product_type')?.value.trim()||'',prod=val('product')?.value.trim()||'',paq=val('package_units')?.value.trim()||'',ti=parseFloat((val('ti')?.value||'').replace(',','.')),hi=parseFloat((val('hi')?.value||'').replace(',','.')),l=val('length_in')?.value.trim()||'',w=val('width_in')?.value.trim()||'',h=val('height_in')?.value.trim()||'';if(Number.isFinite(ti)&&Number.isFinite(hi))val('tihi').value=String(ti*hi);else val('tihi').value='';if(l||w||h)val('dimensions').value=l+' x '+w+' x '+h;else val('dimensions').value='';let sku='',list='';if(cat&&prod&&paq){if(cat.toLowerCase()==='technopaper'){sku=(cat.slice(0,4)+paq+'_'+prod.replace(/"/g,' ')).replace(/\s/g,'').toUpperCase();list='Techno '+prod+' packet in '+paq}else{const n=parseFloat(paq.replace(',','.'));const paqStr=Number.isFinite(n)?String(n/1000).replace(/\.0+$/,'')+'K':paq;sku=(cat.slice(0,2)+tipo.slice(0,3)+prod.slice(0,4)+'_'+paqStr).replace(/\s/g,'').toUpperCase();list=prod+' packet in '+paq}}val('sku').value=sku;val('product_list').value=list};['category','product_type','product','package_units','ti','hi','length_in','width_in','height_in'].forEach(f=>val(f)?.addEventListener('input',recalc));recalc()}else if(kind==='customers'){if(val('id_code'))val('id_code').readOnly=true;const regen=()=>{const type=val('type')?.value||'',company=val('company_name')?.value||'',address=val('address')?.value||'';if(val('id_code'))val('id_code').value=customerCode(company,address,type)};['type','company_name','address'].forEach(f=>val(f)?.addEventListener('input',regen));regen()}
- modal.querySelector('#crud-save').onclick=async()=>{const obj={};fields.forEach(f=>obj[f]=val(f).value);const table=kind==='products'?'products':kind==='customers'?'customers':kind==='verified_configs'?'verified_configs':'rules';const pk=kind==='products'?'id':kind==='customers'?'id_cliente':kind==='verified_configs'?'id':'id_regla';if(row)obj[pk]=row[pk];const res=await sb.from(table).upsert(obj,{onConflict:pk});if(res.error){toast('No se pudo guardar: '+res.error.message,false);return}await loadReferenceData();toast('Guardado correctamente');window.bootstrap?.Modal?.getInstance($('#crudEditModal'))?.hide();loadCrud(kind)}}};
-});
+ const fields={
+  products:['sku','product_list','category','product_type','paper_oz','color','product','package_units','weight','height','ti','hi','tihi','dimensions','length_in','width_in','height_in','information','note'],
+  customers:['id_code','type','company_name','address','accessories','local_delivery_cost_1','local_delivery_cost_extra'],
+  verified_configs:['date','time','product_list','quantity','verified_config','information_source','category','product_type','package_units','dimensions','notes','status'],
+  rules:['estado','fecha','categoria','criterio_busqueda','descripcion','sede_ubicacion','modo_envio','carriers_permitidos','umbral_ups','revenue','requiere_validacion','nota']
+ }[kind];
+ if(!fields){toast('Tipo de registro no soportado',false);return}
+ const html='<div class="crud-form-grid">'+fields.map(f=>'<label><span class="label">'+esc(f)+'</span><input class="input" data-f="'+esc(f)+'" value="'+esc(row?.[f]??'')+'"></label>').join('')+'</div><div class="panel-actions"><button class="btn success" id="crud-save" type="button">Guardar</button></div>';
+ openBootstrapModal('crudEditModal',(row?'Editar':'Nuevo')+' '+esc(kind),html,()=>{
+  const modal=$('#crudEditModal');
+  const val=f=>modal.querySelector('[data-f="'+CSS.escape(f)+'"]');
+  if(kind==='products'){
+   ['sku','product_list','tihi','dimensions'].forEach(f=>{if(val(f))val(f).readOnly=true});
+   const recalc=()=>{
+    const cat=val('category')?.value.trim()||'',tipo=val('product_type')?.value.trim()||'',prod=val('product')?.value.trim()||'',paq=val('package_units')?.value.trim()||'';
+    const ti=parseFloat((val('ti')?.value||'').replace(',','.')),hi=parseFloat((val('hi')?.value||'').replace(',','.'));
+    const l=val('length_in')?.value.trim()||'',w=val('width_in')?.value.trim()||'',h=val('height_in')?.value.trim()||'';
+    val('tihi').value=Number.isFinite(ti)&&Number.isFinite(hi)?String(ti*hi):'';
+    val('dimensions').value=(l||w||h)?l+' x '+w+' x '+h:'';
+    let sku='',list='';
+    if(cat&&prod&&paq){
+     if(cat.toLowerCase()==='technopaper'){
+      sku=(cat.slice(0,4)+paq+'_'+prod.replace(/"/g,' ')).replace(/\s/g,'').toUpperCase();
+      list='Techno '+prod+' packet in '+paq;
+     }else{
+      const n=parseFloat(paq.replace(',','.'));
+      const paqStr=Number.isFinite(n)?String(n/1000).replace(/\.0+$/,'')+'K':paq;
+      sku=(cat.slice(0,2)+tipo.slice(0,3)+prod.slice(0,4)+'_'+paqStr).replace(/\s/g,'').toUpperCase();
+      list=prod+' packet in '+paq;
+     }
+    }
+    val('sku').value=sku;val('product_list').value=list;
+   };
+   ['category','product_type','product','package_units','ti','hi','length_in','width_in','height_in'].forEach(f=>val(f)?.addEventListener('input',recalc));
+   recalc();
+  }else if(kind==='customers'){
+   if(val('id_code'))val('id_code').readOnly=true;
+   const regen=()=>{const type=val('type')?.value||'',company=val('company_name')?.value||'',address=val('address')?.value||'';if(val('id_code'))val('id_code').value=customerCode(company,address,type)};
+   ['type','company_name','address'].forEach(f=>val(f)?.addEventListener('input',regen));
+   regen();
+  }
+  modal.querySelector('#crud-save').onclick=async()=>{
+   const obj={};fields.forEach(f=>obj[f]=val(f).value);
+   const table=kind==='products'?'products':kind==='customers'?'customers':kind==='verified_configs'?'verified_configs':'rules';
+   const pk=kind==='products'?'id':kind==='customers'?'id_cliente':kind==='verified_configs'?'id':'id_regla';
+   if(row)obj[pk]=row[pk];
+   const res=await sb.from(table).upsert(obj,{onConflict:pk});
+   if(res.error){toast('No se pudo guardar: '+res.error.message,false);return}
+   await loadReferenceData();
+   toast('Guardado correctamente');
+   window.bootstrap?.Modal?.getInstance($('#crudEditModal'))?.hide();
+   loadCrud(kind);
+  };
+ });
 }
 function localView(){return `<div class="card"><h2 class="section-title">Local Delivery</h2><p class="muted">Historial de costos por sede.</p><div class="row"><input id="ldq" class="input" placeholder="Cliente, dirección o código"><button class="btn primary" id="ldsearch">Buscar</button></div><div id="ldtable" class="scroll-x" style="margin-top:12px"></div></div>`}
 async function editLocalDelivery(id){
