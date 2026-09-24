@@ -144,9 +144,16 @@ function clearProductWeb(silent=false){if(!silent&&!confirm('¿Limpiar los datos
 function clearAllWeb(){if(!confirm('¿Limpiar toda la cotización y vaciar el carrito?'))return;state.cart=[];state.cartEditIndex=null;state.edit=null;state.selectedCustomer=null;state.selectedProduct=null;render();}
 
 function bindView(){if(state.tab==='quote')bindQuote(); if(state.tab==='quotes')bindQuotes(); if(['products','customers','verified_configs','rules'].includes(state.tab))bindCrud(state.tab); if(state.tab==='local')bindLocal(); if(state.tab==='reports')bindReports()}
+function autoSizeCustomerAddress(){
+ const el=$('#qaddress');if(!el)return;
+ const base=38;
+ el.style.height='auto';
+ const h=Math.max(base,Math.min(el.scrollHeight,180));
+ el.style.height=h+'px';
+}
 function bindQuote(){loadEmail($('#qdate').value);setupCustomerAutocomplete();setupProductAutocomplete();setupServices();setupPallets();const on=(id,ev,fn)=>$('#'+id)?.addEventListener(ev,fn);
 ['pqty','pprice','pweight','pheight','pti','phi'].forEach(id=>on(id,'input',()=>{insured();checkVerified();applyRules();calcPallets();updateRecordId()}));
-['qtype','qaddress','qcompany'].forEach(id=>on(id,'input',()=>{if(id==='qaddress')$('#ld_address').value=$('#qaddress').value;applyRules()}));
+['qtype','qaddress','qcompany'].forEach(id=>on(id,'input',()=>{if(id==='qaddress'){if($('#ld_address'))$('#ld_address').value=$('#qaddress').value;autoSizeCustomerAddress()}applyRules()}));
 ['qdate','qnum','pqty','psku'].forEach(id=>on(id,'input',updateRecordId));
 on('prevenue','change',calc);on('prepack','change',()=>{const v=$('#prepack').value;$('#repack-other-wrap')?.classList.toggle('hidden',v!=='Otro');if(v!=='Otro')$('#pdims').value=v==='Redondear'?(state.selectedProduct?.dimensions||''):v});
 on('repack-other','input',()=>$('#pdims').value=$('#repack-other').value);
@@ -160,7 +167,7 @@ on('save-cust','click',saveCustomerWeb);on('save-quote','click',saveQuote);on('u
 on('toggle-note','click',()=>{const n=$('#pnota');if(n){n.classList.toggle('hidden');if(!n.classList.contains('hidden'))n.focus()}});
 on('add-services','click',addSelectedServicesWeb);on('clear-services','click',()=>$('#selected-services').value='');
 renderCart();if(state.edit)hydrateEdit();else{$('#ld_pallets').value='1';$('#ld_cost_extra').value=$('#ld_cost_extra').value||'20';$('#ld_address').value=$('#qaddress').value||''}
-setHeightUI('main');calcPallets();calc();updateRecordId();
+setHeightUI('main');calcPallets();calc();updateRecordId();autoSizeCustomerAddress();
 }
 async function loadEmail(date){if(!sb)return;const {data,error}=await sb.from('quotes').select('email').eq('date',date);if(error)return;const vals=data.map(x=>parseInt(x.email)).filter(Number.isFinite);$('#qemail').value=String(vals.length?Math.max(...vals)+1:1)}
 function setupCustomerAutocomplete(){const inp=$('#qcompany'),box=$('#suggestions'),addr=$('#qaddress');if(!inp||!box||!addr)return;const draw=()=>{const term=norm(inp.value),rows=state.customers.filter(c=>!term||norm(c.company_name).includes(term)).slice(0,60);box.innerHTML=rows.map(c=>`<div class="suggestion" data-id="${c.id_cliente}"><b>${esc(c.company_name)}</b> <span class="pill">[${esc(c.id_code||'')}]</span><small>📍 ${esc(c.address||'')}</small></div>`).join('');box.classList.toggle('hidden',rows.length===0);box.querySelectorAll('.suggestion').forEach(el=>{el.onmouseenter=()=>showPreview(el,custById(el.dataset.id));el.onmouseleave=hidePreview;el.onclick=()=>{const x=custById(el.dataset.id);if(x)selectCustomer(x)}})};inp.oninput=()=>{state.selectedCustomer=null;draw();applyRules()};inp.onfocus=draw;addr.oninput=()=>{const a=norm(addr.value).replace(/[,.]+/g,' ');if(a.length<5)return;const x=state.customers.find(c=>norm(c.address).replace(/[,.]+/g,' ')===a);if(x){state.selectedCustomer=x;inp.value=x.company_name;$('#qtype').value=x.type||'Other';if(localType(x.type)){if($('#ld_cost1'))$('#ld_cost1').value=num(x.local_delivery_cost_1);if($('#ld_cost_extra'))$('#ld_cost_extra').value=num(x.local_delivery_cost_extra)||20}applyRules()}};if(!window.__logiCustomerOutsideBound){window.__logiCustomerOutsideBound=true;document.addEventListener('click',e=>{if(!e.target.closest('#qcompany')&&!e.target.closest('#suggestions'))$('#suggestions')?.classList.add('hidden')})}}
