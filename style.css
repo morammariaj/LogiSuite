@@ -275,3 +275,37 @@ input,select,textarea,.input,.select,.textarea,.form-control,.form-select{width:
   .cubic-toolbar>.cubic-actions #add-bulk{grid-column:2}
   .cubic-toolbar>.cubic-actions #reset-pallets{grid-column:1/-1;width:100%!important}
 }
+
+/* ===== Surgical Section 4 fix: no global layout changes ===== */
+.area-cubic{min-width:0!important;overflow:visible!important}
+.area-cubic .grid.g4:first-of-type{min-width:0!important}
+.area-cubic .cubic-toolbar{display:grid!important;grid-template-columns:minmax(170px,1.15fr) minmax(120px,.85fr) minmax(0,2fr) auto!important;gap:8px!important;align-items:end!important;width:100%!important;min-width:0!important}
+.area-cubic .cubic-toolbar>.cubic-actions{display:grid!important;grid-template-columns:repeat(2,minmax(72px,1fr)) 58px minmax(88px,1fr) 42px!important;gap:6px!important;min-width:0!important;width:100%!important}
+.area-cubic .cubic-toolbar>.cubic-actions .btn{min-width:0!important;width:100%!important;white-space:nowrap!important}
+.area-cubic .cubic-toolbar>.cubic-actions .bulk-input{width:100%!important;min-width:0!important}
+.area-cubic .pallet-counter{white-space:nowrap!important;min-width:0!important}
+.area-cubic .cubic-head{width:100%!important;min-width:0!important;grid-template-columns:22px repeat(7,minmax(0,1fr))!important;gap:5px!important;padding:0 4px!important}
+.area-cubic #pallets{width:100%!important;min-width:0!important;overflow-x:hidden!important;padding:5px!important}
+.area-cubic .pallet-row{width:100%!important;min-width:0!important;grid-template-columns:22px repeat(7,minmax(0,1fr))!important;gap:5px!important}
+.area-cubic .pallet-row .input{min-width:0!important;width:100%!important;text-align:center!important}
+.area-cubic .grand-total-final{display:flex!important;align-items:center!important;gap:8px!important;width:auto!important;max-width:100%!important;margin:9px 0 5px 2px!important}
+.area-cubic .grand-total-final #grandtotal{width:120px!important;min-width:0!important}
+.area-cubic .label{margin-bottom:5px!important}
+@media(max-width:1100px){
+ .area-cubic .cubic-toolbar{grid-template-columns:minmax(150px,1fr) minmax(100px,.8fr) minmax(0,1.8fr) auto!important}
+}
+@media(max-width:760px){
+ .area-cubic .cubic-toolbar{display:block!important}
+ .area-cubic .cubic-toolbar>label{margin-bottom:7px!important}
+ .area-cubic .cubic-toolbar>.cubic-actions{grid-template-columns:repeat(2,minmax(0,1fr)) 60px minmax(84px,1fr) 40px!important}
+ .area-cubic .pallet-counter{display:inline-flex!important;margin-top:7px!important}
+ .area-cubic .cubic-head{font-size:8px!important}
+ .area-cubic .pallet-row{grid-template-columns:20px repeat(7,minmax(0,1fr))!important;gap:4px!important}
+}
+@media(max-width:430px){
+ .area-cubic .cubic-toolbar>.cubic-actions{grid-template-columns:1fr 1fr!important}
+ .area-cubic .cubic-toolbar>.cubic-actions .bulk-input{grid-column:1}
+ .area-cubic .cubic-toolbar>.cubic-actions #add-bulk{grid-column:2}
+ .area-cubic .cubic-toolbar>.cubic-actions #reset-pallets{grid-column:1/-1}
+ .area-cubic .cubic-head{font-size:7px!important}
+}
