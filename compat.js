@@ -6,9 +6,9 @@
   'use strict';
 
   const C=window.LOGISUITE_CONFIG||{};
-  const sbx=(window.supabase?.createClient&&C.SUPABASE_URL&&C.SUPABASE_PUBLISHABLE_KEY)
+  const sbx=window.logiSupabase || ((window.supabase?.createClient&&C.SUPABASE_URL&&C.SUPABASE_PUBLISHABLE_KEY)
     ? window.supabase.createClient(C.SUPABASE_URL,C.SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}})
-    : null;
+    : null);
   const $=s=>document.querySelector(s);
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const norm=x=>String(x??'').trim().toUpperCase().replace(/\s+/g,' ');
