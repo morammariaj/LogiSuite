@@ -477,7 +477,33 @@ $('#forgot').onclick=async()=>{const email='morammariaj@gmail.com';const {error}
 }
 async function logout(){await sb?.auth.signOut();state.session=null;login()}
 async function start(session){state.session=session;await loadReferenceData();render()}
-async function loadReferenceData(){if(!sb)return;try{const [p,c,v,r]=await Promise.all([sb.from('products').select('*').order('product_list'),sb.from('customers').select('*').order('company_name').order('address'),sb.from('verified_configs').select('*').order('id',{ascending:false}),sb.from('rules').select('*').order('id_regla')]);if(p.error||c.error||v.error||r.error)throw new Error('offline');state.products=p.data||[];state.customers=c.data||[];state.verified=v.data||[];state.rules=r.data||[];localStorage.setItem('logisuite-cache',JSON.stringify({products:state.products,customers:state.customers,verified:state.verified,rules:state.rules}));}catch(e){try{const x=JSON.parse(localStorage.getItem('logisuite-cache')||'{}');state.products=x.products||[];state.customers=x.customers||[];state.verified=x.verified||[];state.rules=x.rules||[];}catch(_){}}if(!window.__logiNetworkBound){window.__logiNetworkBound=true;window.addEventListener('online',async()=>{state.online=true;render();await syncPending();await loadReferenceData()});window.addEventListener('offline',()=>{state.online=false;render()})}}
+async function loadReferenceData(){
+ showLoading('Cargando productos, clientes y reglas…');
+ try{
+  if(!sb)return;
+  try{
+   const [p,c,v,r]=await Promise.all([
+    sb.from('products').select('*').order('product_list'),
+    sb.from('customers').select('*').order('company_name').order('address'),
+    sb.from('verified_configs').select('*').order('id',{ascending:false}),
+    sb.from('rules').select('*').order('id_regla')
+   ]);
+   if(p.error||c.error||v.error||r.error)throw new Error('offline');
+   state.products=p.data||[];state.customers=c.data||[];state.verified=v.data||[];state.rules=r.data||[];
+   localStorage.setItem('logisuite-cache',JSON.stringify({products:state.products,customers:state.customers,verified:state.verified,rules:state.rules}));
+  }catch(e){
+   try{
+    const x=JSON.parse(localStorage.getItem('logisuite-cache')||'{}');
+    state.products=x.products||[];state.customers=x.customers||[];state.verified=x.verified||[];state.rules=x.rules||[];
+   }catch(_){}
+  }
+  if(!window.__logiNetworkBound){
+   window.__logiNetworkBound=true;
+   window.addEventListener('online',async()=>{state.online=true;render();await syncPending();await loadReferenceData()});
+   window.addEventListener('offline',()=>{state.online=false;render()});
+  }
+ }finally{hideLoading()}
+}
 async function syncPending(){const pending=JSON.parse(localStorage.getItem('logisuite-pending')||'[]');if(!pending.length||!sb||!navigator.onLine)return;const rest=[];for(const x of pending){try{const {error}=await sb.from(x.table).insert(x.rows);if(error)rest.push(x)}catch(e){rest.push(x)}}localStorage.setItem('logisuite-pending',JSON.stringify(rest));if(!rest.length)toast('Cambios offline sincronizados')}
 
 function isStandalone(){return window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true||document.referrer.startsWith('android-app://')}
