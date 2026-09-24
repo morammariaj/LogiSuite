@@ -140,3 +140,28 @@ input,select,textarea,.input,.select,.textarea,.form-control,.form-select{width:
  .grand-total-final #grandtotal{width:140px!important}
  .cubic-head-final{min-width:720px}
 }
+
+.cubic-grand-original{display:none!important}
+.cubic-controls-final{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:9px;padding:9px 10px;border:1px solid var(--ls-border);border-radius:11px;background:var(--ls-surface)}
+.cubic-row-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.cubic-row-tools .btn{width:auto!important;min-width:42px;min-height:34px}
+.cubic-row-tools #pallet-add-slot .btn,.cubic-row-tools #pallet-remove-slot .btn{min-width:56px}
+.bulk-input{width:68px!important;min-width:68px!important;text-align:center}
+.pallet-counter{white-space:nowrap;font-size:11px;font-weight:800;color:var(--ls-muted)}
+.grand-total-final{display:flex;align-items:center;gap:8px}
+.grand-total-final .label{margin:0}
+.grand-total-final #grandtotal{width:120px!important;min-width:120px!important}
+.service-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding-bottom:7px;margin-bottom:7px;border-bottom:1px solid var(--ls-border);font-size:11px;color:var(--ls-muted)}
+.service-heading b{font-size:13px;color:var(--ls-lilac-dark)}
+.form-check-inline{display:inline-flex;align-items:center;gap:3px;margin-left:4px}
+.service-actions{display:flex;gap:7px;margin:7px 0}
+.service-actions .btn{flex:1}
+.services-panel .services-list{display:flex;flex-wrap:wrap;gap:5px;max-height:190px;overflow:auto;padding:4px 0}
+.services-panel .services-list .pill{display:inline-flex;align-items:center;gap:4px;padding:5px 7px;border:1px solid var(--ls-border);background:var(--ls-surface);border-radius:8px;font-size:10px}
+.services-panel .services-list .pill input{width:auto}
+@media(max-width:760px){
+ .cubic-controls-final{display:block}
+ .cubic-row-tools{width:100%}
+ .grand-total-final{margin-top:8px;justify-content:flex-start}
+ .services-panel .services-list{max-height:230px}
+}
