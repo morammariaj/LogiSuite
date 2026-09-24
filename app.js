@@ -66,7 +66,43 @@ function startWorkClocks(){
  if(window.__logiWorkClockTimer)return;
  window.__logiWorkClockTimer=window.setInterval(updateWorkClocks,1000);
 }
-function render(){state.dark=localStorage.getItem('logisuite-dark')==='1';document.body.innerHTML=appShell();document.body.setAttribute('data-bs-theme',state.dark?'dark':'light');const menu=$('#mobile-menu-toggle'),actions=$('#top-actions');if(menu&&actions){menu.onclick=()=>{const open=actions.classList.toggle('mobile-open');menu.setAttribute('aria-expanded',String(open));menu.setAttribute('aria-label',open?'Cerrar menú':'Abrir menú');};actions.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{if(window.innerWidth<=1000){actions.classList.remove('mobile-open');menu.setAttribute('aria-expanded','false');menu.setAttribute('aria-label','Abrir menú')}}))}$('#theme').onclick=()=>{state.dark=!state.dark;localStorage.setItem('logisuite-dark',state.dark?'1':'0');render()};$('#change-password').onclick=showChangePassword;$('#logout').onclick=logout;$('#view').innerHTML=quoteView();arrangeLocalLayout();bindQuote();bindActionButtons();setupInstallInvite();startWorkClocks();}
+function render(){
+ state.dark=localStorage.getItem('logisuite-dark')==='1';
+ document.body.innerHTML=appShell();
+ document.body.setAttribute('data-bs-theme',state.dark?'dark':'light');
+ const menu=$('#mobile-menu-toggle'),actions=$('#top-actions'),backdrop=$('#mobile-menu-backdrop');
+ const closeMobileMenu=()=>{
+  if(actions)actions.classList.remove('mobile-open');
+  if(backdrop)backdrop.classList.remove('show');
+  if(menu){
+   menu.setAttribute('aria-expanded','false');
+   menu.setAttribute('aria-label','Abrir menú');
+  }
+ };
+ const openMobileMenu=()=>{
+  if(!actions||!menu)return;
+  actions.classList.add('mobile-open');
+  if(backdrop)backdrop.classList.add('show');
+  menu.setAttribute('aria-expanded','true');
+  menu.setAttribute('aria-label','Cerrar menú');
+ };
+ if(menu&&actions){
+  menu.onclick=()=>{
+   const open=actions.classList.contains('mobile-open');
+   if(open)closeMobileMenu(); else openMobileMenu();
+  };
+  backdrop?.addEventListener('click',closeMobileMenu);
+  document.addEventListener('keydown',e=>{
+   if(e.key==='Escape'&&actions.classList.contains('mobile-open'))closeMobileMenu();
+  });
+  actions.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+   if(window.innerWidth<=1000)closeMobileMenu();
+  }));
+  window.addEventListener('resize',()=>{
+   if(window.innerWidth>1000)closeMobileMenu();
+  },{passive:true});
+ }
+ $('#theme').onclick=()=>{state.dark=!state.dark;localStorage.setItem('logisuite-dark',state.dark?'1':'0');render()};$('#change-password').onclick=showChangePassword;$('#logout').onclick=logout;$('#view').innerHTML=quoteView();arrangeLocalLayout();bindQuote();bindActionButtons();setupInstallInvite();startWorkClocks();}
 function quoteView(){const d=new Date();const ds=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;return `<div class="card"><h2 class="section-title">1. General Information</h2><div class="grid g3"><label><span class="label">DATE</span><input id="qdate" class="input" value="${esc(state.edit?.date||ds)}"></label><label><span class="label"># QUOTE</span><input id="qnum" class="input" value="${esc(state.edit?.quote||'')}"></label><label><span class="label">EMAIL</span><input id="qemail" class="input" value="${esc(state.edit?.email||'')}" readonly></label></div></div>
 <div class="card"><h2 class="section-title">2. Customer Information</h2><div class="customer-grid"><label><span class="label">TYPE</span><select id="qtype" class="select"><option>Seleccionar</option>${['Distributor','Restaurant','Hotel','Country Club','Golf Club','Cafe','Warehouse','Residential','Local Delivery','Other','S/E'].map(x=>`<option ${state.edit?.type===x?'selected':''}>${x}</option>`).join('')}</select></label><label class="autocomplete customer-company-field"><span class="label">COMPANY OR NAME</span><input id="qcompany" class="input" autocomplete="off" value="${esc(state.edit?.company_name||'')}"><div id="suggestions" class="suggestions hidden"></div></label><label class="customer-address-field"><span class="label">ZIP/ADDRESS</span><textarea id="qaddress" class="textarea">${esc(state.edit?.address||'')}</textarea></label><div class="customer-save-wrap"><button type="button" id="save-cust" class="icon-btn" title="Guardar cliente" aria-label="Guardar cliente">💾</button></div></div><div id="customer-warning" class="muted"></div></div>
 <div class="card"><h2 class="section-title">3. Product Information</h2><div class="product-main-grid"><label class="autocomplete product-name"><span class="label">PRODUCT</span><input id="pname" class="input" autocomplete="off"><div id="prod-suggestions" class="suggestions hidden"></div></label><label><span class="label">SKU</span><input id="psku" class="input" readonly></label><label><span class="label">RECORD ID</span><input id="record-id" class="input" readonly></label><label><span class="label">QTY</span><input id="pqty" class="input" type="number" min="0"></label></div>
