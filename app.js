@@ -32,9 +32,11 @@ function hideLoading(){
 }
 function appShell(){return '<div class="app-shell"><header class="app-topbar"><div class="brand-wrap"><img src="icon-192-lilac.svg" class="brand-icon" alt="LogiSuite"><div><div class="brand-name">LogiSuite</div><div class="brand-sub">Cotizador y gestión logística</div></div></div><div class="top-actions"><span class="status-pill '+(state.online?'online':'offline')+'"><i></i>'+(state.online?'Online':'Offline')+'</span><div class="time-widgets" aria-label="Relojes de trabajo"><div class="time-pill"><span>🇨🇴 Colombia</span><b id="clock-colombia">--:--:--</b></div><div class="time-pill"><span>🇺🇸 Miami</span><b id="clock-miami">--:--:--</b></div><span id="work-notice" class="work-notice hidden"></span></div><button class="btn btn-sm theme-btn" id="theme">'+(state.dark?'☀️ Claro':'🌙 Oscuro')+'</button><button class="btn btn-sm btn-outline-secondary" id="change-password">Cambiar contraseña</button><span class="user-name">'+esc(state.session?.user_metadata?.display_name||'María José')+'</span><button class="btn btn-sm btn-outline-secondary" id="logout">Cerrar sesión</button></div></header><main class="app-main"><div id="view"></div></main></div>';}
 function formatClock(timeZone){
- const p=new Intl.DateTimeFormat('es-CO',{timeZone,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(new Date());
- const get=t=>p.find(x=>x.type===t)?.value||'00';
- return {hour:Number(get('hour')),minute:Number(get('minute')),second:Number(get('second')),text:get('hour')+':'+get('minute')+':'+get('second')};
+ const parts=new Intl.DateTimeFormat('es-CO',{timeZone,hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true}).formatToParts(new Date());
+ const get=t=>parts.find(x=>x.type===t)?.value||'00';
+ const hour=Number(get('hour'));
+ const period=(get('dayPeriod')||'').toLowerCase();
+ return {hour,minute:Number(get('minute')),second:Number(get('second')),text:hour+':'+get('minute')+':'+get('second')+' '+(period==='a. m.'||period==='am'?'AM':'PM')};
 }
 function updateWorkClocks(){
  const co=formatClock('America/Bogota'),mi=formatClock('America/New_York');
