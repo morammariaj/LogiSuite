@@ -443,11 +443,14 @@
       const types=[...new Set(rows.map(r=>String(r.type||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
       const t=ensureQuoteToolbar();
       t.innerHTML='<label class="compat-db-field compat-db-search"><span class="label">Search</span><input id="vq" class="input" placeholder="Quote, company, address or product" value="'+esc(st.q)+'"></label><label class="compat-db-field"><span class="label">From</span><input id="vf" class="input" type="date" value="'+esc(st.from)+'"></label><label class="compat-db-field"><span class="label">To</span><input id="vt" class="input" type="date" value="'+esc(st.to)+'"></label><label class="compat-db-field"><span class="label">Type</span><select id="vq-type" class="select"><option value="">All</option>'+types.map(x=>'<option value="'+esc(x)+'"'+(norm(st.type)===norm(x)?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select></label><label class="compat-db-field"><span class="label">Order</span><select id="vq-sort" class="select"><option value="-date">Date newest</option><option value="date">Date oldest</option><option value="quote">Quote low → high</option><option value="-quote">Quote high → low</option><option value="company_name">Company A → Z</option><option value="-company_name">Company Z → A</option></select></label><button class="btn primary" id="search-quotes" type="button">Apply</button><button class="btn secondary" id="clear-quotes-filters" type="button">Clear</button>';
-      $('#vq-sort').value=st.sort;
       if(st.q)rows=rows.filter(r=>[r.quote,r.company_name,r.address,r.product].some(v=>norm(v).includes(norm(st.q))));if(st.from||st.to)rows=rows.filter(r=>{const d=dateISO(r.date);return(!st.from||d>=st.from)&&(!st.to||d<=st.to)});if(st.type)rows=rows.filter(r=>norm(r.type)===norm(st.type));dbSortRows(rows,st.sort);
       const pages=Math.max(1,Math.ceil(rows.length/st.size));if(st.page>=pages)st.page=pages-1;const from=st.page*st.size,view=rows.slice(from,from+st.size);
       host.innerHTML='<table class="data-table"><thead><tr><th>DATE</th><th>QUOTE #</th><th>COMPANY OR NAME</th><th>ADDRESS</th><th>TYPE</th><th>PRODUCT</th><th>ACTIONS</th></tr></thead><tbody>'+view.map(r=>'<tr><td>'+esc(r.date)+'</td><td>'+esc(r.quote)+'</td><td>'+esc(r.company_name)+'</td><td>'+esc(r.address)+'</td><td>'+esc(r.type)+'</td><td>'+esc(r.product)+'</td><td class="compat-quote-actions"><button class="btn success btn-sm" data-qsp="'+esc(r.quote_instance_id)+'">SP</button><button class="btn warning btn-sm" data-qco="'+esc(r.quote_instance_id)+'">COST</button><button class="btn primary btn-sm" data-qdet="'+esc(r.quote_instance_id)+'">Details</button><button class="btn secondary btn-sm" data-qedit="'+esc(r.quote_instance_id)+'">Edit</button><button class="btn danger btn-sm" data-qdel="'+esc(r.quote_instance_id)+'">Delete</button></td></tr>').join('')+'</tbody></table>'+dbPagerHtml(st.page,pages,rows.length,st.size);
-      $('#search-quotes').onclick=()=>{st.q=$('#vq').value.trim();st.from=$('#vf').value;st.to=$('#vt').value;st.type=$('#vq-type').value;st.sort=$('#vq-sort').value;st.page=0;compatLoadQuotes()};$('#clear-quotes-filters').onclick=()=>{st.q='';st.from='';st.to='';st.type='';st.sort='-date';st.page=0;compatLoadQuotes()};
+      const searchQuotes=t.querySelector('#search-quotes'),clearQuotes=t.querySelector('#clear-quotes-filters'),vqEl=t.querySelector('#vq'),vfEl=t.querySelector('#vf'),vtEl=t.querySelector('#vt'),vqtEl=t.querySelector('#vq-type'),vqsEl=t.querySelector('#vq-sort');
+      if(!searchQuotes||!clearQuotes||!vqEl||!vfEl||!vtEl||!vqtEl||!vqsEl)throw new Error('No se pudieron inicializar los filtros de DataBase Quotes');
+      vqsEl.value=st.sort;
+      searchQuotes.onclick=()=>{st.q=vqEl.value.trim();st.from=vfEl.value;st.to=vtEl.value;st.type=vqtEl.value;st.sort=vqsEl.value;st.page=0;compatLoadQuotes()};
+      clearQuotes.onclick=()=>{st.q='';st.from='';st.to='';st.type='';st.sort='-date';st.page=0;compatLoadQuotes()};
       host.querySelectorAll('[data-qsp]').forEach(b=>b.onclick=()=>compatOpenPreview(b.dataset.qsp,'SP'));host.querySelectorAll('[data-qco]').forEach(b=>b.onclick=()=>compatOpenPreview(b.dataset.qco,'COST'));host.querySelectorAll('[data-qdet]').forEach(b=>b.onclick=()=>compatOpenDetails(b.dataset.qdet));host.querySelectorAll('[data-qedit]').forEach(b=>b.onclick=()=>legacy.editQuote?.(b.dataset.qedit));host.querySelectorAll('[data-qdel]').forEach(b=>b.onclick=()=>compatDeleteQuote(b.dataset.qdel));
       host.querySelectorAll('[data-pager="first"]').forEach(b=>b.onclick=()=>{st.page=0;compatLoadQuotes()});host.querySelectorAll('[data-pager="prev"]').forEach(b=>b.onclick=()=>{st.page=Math.max(0,st.page-1);compatLoadQuotes()});host.querySelectorAll('[data-pager="next"]').forEach(b=>b.onclick=()=>{st.page=Math.min(pages-1,st.page+1);compatLoadQuotes()});host.querySelectorAll('[data-pager="last"]').forEach(b=>b.onclick=()=>{st.page=pages-1;compatLoadQuotes()});host.querySelectorAll('.compat-page-size').forEach(b=>b.onchange=e=>{st.size=Number(e.target.value);st.page=0;compatLoadQuotes()})
     }catch(e){console.error(e);toast('No se pudieron cargar las cotizaciones: '+e.message,false)}
@@ -520,7 +523,7 @@
         <label class="compat-span-2"><span class="label">From</span><input id="rep-from" class="input" type="date" value="${todayISO()}"></label>
         <label class="compat-span-2"><span class="label">To</span><input id="rep-to" class="input" type="date" value="${todayISO()}"></label>
         <label class="compat-span-2" style="display:flex;align-items:center;gap:8px;padding-bottom:9px"><input id="rep-all" type="checkbox"> <span>All dates</span></label>
-        <label class="compat-span-2"><span class="label"># Quote</span><input id="rep-quote" class="input" placeholder="Optional"></label>
+        <label class="compat-span-2"><span class="label"># Quote</span><input id="rep-quote" class="input" placeholder="Quote (opcional)"></label>
         <div id="rep-cat-wrap" class="compat-span-3"></div><div id="rep-type-wrap" class="compat-span-3"></div>
         <div class="compat-span-6 compat-action-row"><button type="button" class="btn primary" id="rep-search">Search</button><button type="button" class="btn success" id="rep-xlsx">Download Excel</button><button type="button" class="btn danger" id="rep-pdf">Preview PDF</button></div>
       </div>
@@ -598,17 +601,23 @@
   window.reportsView=reportViewHtml;
   window.bindReports=async function(){
     ensureCompatCss();
-    const k=$('#rep-kind'); if(!k)return;
+    const root=document.querySelector('.compat-report');
+    const k=root?.querySelector('#rep-kind');
+    const fromEl=root?.querySelector('#rep-from');
+    const toEl=root?.querySelector('#rep-to');
+    const allEl=root?.querySelector('#rep-all');
+    const searchEl=root?.querySelector('#rep-search');
+    const xlsxEl=root?.querySelector('#rep-xlsx');
+    const pdfEl=root?.querySelector('#rep-pdf');
+    if(!root||!k||!fromEl||!toEl||!allEl||!searchEl||!xlsxEl||!pdfEl)throw new Error('No se pudo inicializar el panel de Reportes');
     await refreshReportFilterOptions();
-    // Default desktop behavior: the daily report starts on today.
-    k.value='winning_daily'; $('#rep-from').value=todayISO();$('#rep-to').value=todayISO();
+    k.value='winning_daily'; fromEl.value=todayISO(); toEl.value=todayISO();
     await refreshReportFilterOptions();
-    const refresh=async()=>{await refreshReportFilterOptions()};
-    k.onchange=refresh;
-    $('#rep-all').onchange=()=>{const disabled=$('#rep-all').checked;$('#rep-from').disabled=disabled;$('#rep-to').disabled=disabled};
-    $('#rep-search').onclick=runReport;
-    $('#rep-xlsx').onclick=()=>{if(!reportCache.length){toast('Primero genera el reporte',false);return}const cols=Object.keys(reportCache[0]);downloadXlsx('LogiSuite_'+(reportTitle||'Report'),reportCache,cols)};
-    $('#rep-pdf').onclick=()=>{if(!reportCache.length){toast('Primero genera el reporte',false);return}const f=reportFiltersState();printReport(reportTitle,`${f.from||'ALL'} → ${f.to||'ALL'}`,reportCache)};
+    k.onchange=async()=>{await refreshReportFilterOptions()};
+    allEl.onchange=()=>{const disabled=allEl.checked;fromEl.disabled=disabled;toEl.disabled=disabled};
+    searchEl.onclick=runReport;
+    xlsxEl.onclick=()=>{if(!reportCache.length){toast('Primero genera el reporte',false);return}const cols=Object.keys(reportCache[0]);downloadXlsx('LogiSuite_'+(reportTitle||'Report'),reportCache,cols)};
+    pdfEl.onclick=()=>{if(!reportCache.length){toast('Primero genera el reporte',false);return}const f=reportFiltersState();printReport(reportTitle,String(f.from||'ALL')+' → '+String(f.to||'ALL'),reportCache)};
     await runReport();
   };
 
@@ -661,7 +670,7 @@
       const rows=await allRows(cfg.table);
       const filterHtml=cfg.filters.map(f=>'<label class="compat-db-field"><span class="label">'+esc(f[1])+'</span><select class="select" data-db-filter="'+esc(f[0])+'"><option value="">All</option>'+[...new Set(rows.map(r=>String(r?.[f[0]]??'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es')).map(v=>'<option value="'+esc(v)+'"'+(st.filters[f[0]]===v?' selected':'')+'>'+esc(v)+'</option>').join('')+'</select></label>').join('');
       const sortHtml=cfg.sorts.map(x=>'<option value="'+esc(x[0])+'"'+(st.sort===x[0]?' selected':'')+'>'+esc(x[1])+'</option>').join('');
-      dbMakeToolbar(host,'compat-crud-toolbar','<label class="compat-db-field compat-db-search"><span class="label">Search</span><input id="compat-crud-search" class="input" placeholder="Name, code, address..." value="'+esc(st.q)+'"></label>'+filterHtml+'<label class="compat-db-field"><span class="label">Order</span><select id="compat-crud-sort" class="select">'+sortHtml+'</select></label><button type="button" class="btn primary" id="compat-crud-apply">Apply</button><button type="button" class="btn secondary" id="compat-crud-clear">Clear</button>');
+      const toolbar=dbMakeToolbar(host,'compat-crud-toolbar','<label class="compat-db-field compat-db-search"><span class="label">Search</span><input id="compat-crud-search" class="input" placeholder="Name, code, address..." value="'+esc(st.q)+'"></label>'+filterHtml+'<label class="compat-db-field"><span class="label">Order</span><select id="compat-crud-sort" class="select">'+sortHtml+'</select></label><button type="button" class="btn primary" id="compat-crud-apply">Apply</button><button type="button" class="btn secondary" id="compat-crud-clear">Clear</button>');
       const q=norm(st.q);let filtered=rows.filter(r=>!q||cfg.search.some(k=>norm(r?.[k]).includes(q)));
       Object.entries(st.filters).forEach(([k,v])=>{if(v)filtered=filtered.filter(r=>norm(r?.[k])===norm(v))});
       dbSortRows(filtered,st.sort);
@@ -673,9 +682,11 @@
       if(kind==='verified_configs')body='<table class="data-table"><thead><tr><th>ID</th><th>DATE</th><th>TIME</th><th>PRODUCT</th><th>QTY</th><th>CONFIGURATION</th><th>SOURCE</th><th>CATEGORY</th><th>TYPE</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>'+view.map(r=>'<tr><td>'+cell(r.id)+'</td><td>'+cell(r.date)+'</td><td>'+cell(r.time)+'</td><td>'+cell(r.product_list)+'</td><td>'+cell(r.quantity)+'</td><td>'+cell(r.verified_config)+'</td><td>'+cell(r.information_source)+'</td><td>'+cell(r.category)+'</td><td>'+cell(r.product_type)+'</td><td>'+cell(r.status||'VIGENTE')+'</td><td class="compat-action-row"><button class="btn primary btn-sm" data-v-edit="'+r.id+'">Edit</button><button class="btn danger btn-sm" data-v-del="'+r.id+'">Delete</button></td></tr>').join('')+'</tbody></table>';
       if(kind==='rules')body='<table class="data-table"><thead><tr><th>ID</th><th>STATUS</th><th>DATE</th><th>CATEGORY</th><th>CRITERION</th><th>DESCRIPTION</th><th>LOCATION</th><th>MODE</th><th>CARRIERS</th><th>UPS</th><th>REVENUE</th><th>VALIDATION</th><th>NOTE</th><th>ACTIONS</th></tr></thead><tbody>'+view.map(r=>'<tr><td>'+cell(r.id_regla)+'</td><td>'+cell(r.estado)+'</td><td>'+cell(r.fecha)+'</td><td>'+cell(r.categoria)+'</td><td>'+cell(r.criterio_busqueda)+'</td><td>'+cell(r.descripcion)+'</td><td>'+cell(r.sede_ubicacion)+'</td><td>'+cell(r.modo_envio)+'</td><td>'+cell(r.carriers_permitidos)+'</td><td>'+cell(r.umbral_ups)+'</td><td>'+cell(r.revenue)+'</td><td>'+cell(r.requiere_validacion)+'</td><td>'+cell(r.nota)+'</td><td class="compat-action-row"><button class="btn primary btn-sm" data-r-edit="'+r.id_regla+'">Edit</button><button class="btn warning btn-sm" data-r-toggle="'+r.id_regla+'">'+(norm(r.estado)==='ACTIVA'?'Deactivate':'Activate')+'</button><button class="btn danger btn-sm" data-r-del="'+r.id_regla+'">Delete</button></td></tr>').join('')+'</tbody></table>';
       host.innerHTML=body+dbPagerHtml(st.page,pages,filtered.length,st.size);
-      $('#compat-crud-search').oninput=e=>{st.q=e.target.value;st.page=0};
-      $('#compat-crud-apply').onclick=()=>{st.q=$('#compat-crud-search').value.trim();st.filters={};host.querySelectorAll('[data-db-filter]').forEach(x=>{if(x.value)st.filters[x.dataset.dbFilter]=x.value});st.sort=$('#compat-crud-sort').value;compatLoadCrud(kind)};
-      $('#compat-crud-clear').onclick=()=>{st.q='';st.filters={};st.sort=cfg.sorts[0][0];compatLoadCrud(kind)};
+      const searchEl=toolbar.querySelector('#compat-crud-search'),applyEl=toolbar.querySelector('#compat-crud-apply'),clearEl=toolbar.querySelector('#compat-crud-clear'),sortEl=toolbar.querySelector('#compat-crud-sort');
+      if(!searchEl||!applyEl||!clearEl||!sortEl)throw new Error('No se pudieron inicializar los filtros de la tabla');
+      searchEl.oninput=e=>{st.q=e.target.value;st.page=0};
+      applyEl.onclick=()=>{st.q=searchEl.value.trim();st.filters={};toolbar.querySelectorAll('[data-db-filter]').forEach(x=>{if(x.value)st.filters[x.dataset.dbFilter]=x.value});st.sort=sortEl.value;compatLoadCrud(kind)};
+      clearEl.onclick=()=>{st.q='';st.filters={};st.sort=cfg.sorts[0][0];compatLoadCrud(kind)};
       host.querySelectorAll('[data-pager="first"]').forEach(b=>b.onclick=()=>{st.page=0;compatLoadCrud(kind,false)});
       host.querySelectorAll('[data-pager="prev"]').forEach(b=>b.onclick=()=>{st.page=Math.max(0,st.page-1);compatLoadCrud(kind,false)});
       host.querySelectorAll('[data-pager="next"]').forEach(b=>b.onclick=()=>{st.page=Math.min(pages-1,st.page+1);compatLoadCrud(kind,false)});
