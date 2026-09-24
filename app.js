@@ -30,7 +30,7 @@ function hideLoading(){
  const o=document.getElementById('logi-loading');
  if(o)o.classList.remove('show');
 }
-function appShell(){return '<div class="app-shell"><header class="app-topbar"><div class="brand-wrap"><img src="icon-192-lilac.svg" class="brand-icon" alt="LogiSuite"><div><div class="brand-name">LogiSuite</div><div class="brand-sub">Cotizador y gestión logística</div></div></div><div class="top-actions"><span class="status-pill '+(state.online?'online':'offline')+'"><i></i>'+(state.online?'Online':'Offline')+'</span><div class="time-widgets" aria-label="Relojes de trabajo"><div class="time-pill"><span>🇨🇴 Colombia</span><b id="clock-colombia">--:--:--</b></div><div class="time-pill"><span>🇺🇸 Miami</span><b id="clock-miami">--:--:--</b></div><span id="work-notice" class="work-notice hidden"></span></div><button class="btn btn-sm theme-btn" id="theme">'+(state.dark?'☀️ Claro':'🌙 Oscuro')+'</button><button class="btn btn-sm btn-outline-secondary" id="change-password">Cambiar contraseña</button><span class="user-name">'+esc(state.session?.user_metadata?.display_name||'María José')+'</span><button class="btn btn-sm btn-outline-secondary" id="logout">Cerrar sesión</button></div></header><main class="app-main"><div id="view"></div></main></div>';}
+function appShell(){return '<div class="app-shell"><header class="app-topbar"><div class="brand-wrap"><img src="icon-192-lilac.svg" class="brand-icon" alt="LogiSuite"><div><div class="brand-name">LogiSuite</div><div class="brand-sub">Cotizador y gestión logística</div></div></div><div class="top-actions"><span class="status-pill '+(state.online?'online':'offline')+'"><i></i>'+(state.online?'Online':'Offline')+'</span><div class="time-widgets" aria-label="Relojes de trabajo"><div class="time-pill"><span>🇨🇴 Colombia</span><b id="clock-colombia">--:--:--</b></div><div class="time-pill"><span>🇺🇸 Miami</span><b id="clock-miami">--:--:--</b></div><span id="work-notice" class="work-notice hidden"></span></div><button type="button" class="btn btn-sm btn-outline-success" id="backup-local-db" title="Descargar las tres bases SQLite listas para reemplazar el sistema local">💾 DB Local</button><button class="btn btn-sm theme-btn" id="theme">'+(state.dark?'☀️ Claro':'🌙 Oscuro')+'</button><button class="btn btn-sm btn-outline-secondary" id="change-password">Cambiar contraseña</button><span class="user-name">'+esc(state.session?.user_metadata?.display_name||'María José')+'</span><button class="btn btn-sm btn-outline-secondary" id="logout">Cerrar sesión</button></div></header><main class="app-main"><div id="view"></div></main></div>';}
 function formatClock(timeZone){
  const parts=new Intl.DateTimeFormat('es-CO',{timeZone,hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true}).formatToParts(new Date());
  const get=t=>parts.find(x=>x.type===t)?.value||'00';
@@ -118,13 +118,15 @@ function openDatabase(tab){
  const names={products:'Productos',customers:'Clientes',verified_configs:'Verificados',rules:'Reglas',local:'Local Delivery',reports:'Reportes',quotes:'DataBase Quotes'};
  const tabs=Object.keys(names).map(k=>'<button type="button" class="nav-link '+(tab===k?'active':'')+'" data-db-tab="'+k+'">'+names[k]+'</button>').join('');
  const body='<div class="nav nav-pills gap-2 mb-3 db-tabs">'+tabs+'</div><div id="db-body"></div>';
- openBootstrapModal('dbModal','Data Base',body,()=>{
+ openBootstrapModal('dbModal','Data Base',body,async()=>{
   document.querySelectorAll('[data-db-tab]').forEach(b=>b.onclick=()=>{bootstrap.Modal.getInstance($('#dbModal'))?.hide();setTimeout(()=>openDatabase(b.dataset.dbTab),180)});
-  const box=$('#db-body');
-  if(tab==='local'){box.innerHTML=localView();bindLocal();waitForLoadingElement('#ldtable table','Cargando Local Delivery…')}
-  else if(tab==='reports'){box.innerHTML=reportsView();bindReports();hideLoading()}
-  else if(tab==='quotes'){box.innerHTML=quotesView();bindQuotes();waitForLoadingElement('#quotes-table table','Cargando cotizaciones…')}
-  else{box.innerHTML=crudView(tab);bindCrud(tab);waitForLoadingElement('#crud-table table','Cargando registros…')}
+  const box=$('#db-body'); if(!box)return;
+  try{
+   if(tab==='local'){box.innerHTML=localView();await (window.bindLocal||bindLocal)?.()}
+   else if(tab==='reports'){box.innerHTML=(window.reportViewHtml?window.reportViewHtml():reportsView());await (window.bindReports||bindReports)?.()}
+   else if(tab==='quotes'){box.innerHTML=(window.quotesView?window.quotesView():quotesView());await (window.bindQuotes||bindQuotes)?.()}
+   else{box.innerHTML=crudView(tab);await (window.bindCrud||bindCrud)?.(tab)}
+  }catch(e){console.error('Data Base tab error',e);box.innerHTML='<div class="alert alert-danger">No se pudo cargar esta sección: '+esc(e.message||e)+'</div>';toast('No se pudo cargar Data Base: '+(e.message||e),false)}
  });
 }
 function openReportsModal(){openBootstrapModal('reportsModal','Reportes',reportsView(),()=>bindReports());}
@@ -242,7 +244,7 @@ on('repack-other','input',()=>$('#pdims').value=$('#repack-other').value);
 on('maxheight_carrier','change',()=>setHeightUI('carrier'));on('maxheight','change',()=>setHeightUI('main'));on('customheight','input',()=>setHeightUI('main'));on('customheight_carrier','input',()=>setHeightUI('carrier'));
 on('qdate','change',e=>loadEmail(e.target.value));
 on('configmode','change',()=>{});
-on('database','click',()=>openDatabase('products'));on('view-quotes','click',openQuotesModal);on('export','click',openExportModal);on('reports','click',openReportsModal);
+on('database','click',()=>openDatabase('products'));on('backup-local-db','click',()=>{if(typeof window.downloadLocalDatabaseZip==='function')window.downloadLocalDatabaseZip();else toast('El módulo de respaldo todavía está cargando. Recarga la página e inténtalo de nuevo.',false)});on('view-quotes','click',openQuotesModal);on('export','click',openExportModal);on('reports','click',openReportsModal);
 on('save-cust','click',saveCustomerWeb);on('save-quote','click',saveQuote);on('update-quote','click',saveQuote);on('add-product','click',addCart);on('clear-product','click',()=>clearProductWeb());on('clear-all','click',clearAllWeb);
 on('toggle-note','click',()=>{const n=$('#pnota');if(n){n.classList.toggle('hidden');if(!n.classList.contains('hidden'))n.focus()}});
 on('add-services','click',addSelectedServicesWeb);on('clear-services','click',()=>$('#selected-services').value='');
