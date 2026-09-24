@@ -1510,3 +1510,51 @@ body.modal-open>.modal{z-index:2060!important}
     min-height:18px!important;
   }
 }
+
+/* ===== v32: Company + Save as one integrated input group ===== */
+.area-customer .customer-grid{
+  grid-template-columns:minmax(150px,.85fr) minmax(260px,2fr) minmax(300px,3fr)!important;
+  column-gap:12px!important;
+}
+.area-customer .customer-company-field .customer-input-row{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:stretch!important;
+  gap:0!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.area-customer .customer-company-field .customer-input-row #qcompany{
+  flex:1 1 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  height:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  border-top-right-radius:0!important;
+  border-bottom-right-radius:0!important;
+}
+.area-customer .customer-company-field .customer-input-row #save-cust{
+  flex:0 0 40px!important;
+  width:40px!important;
+  min-width:40px!important;
+  height:38px!important;
+  min-height:38px!important;
+  margin:0!important;
+  padding:0!important;
+  border-radius:0 9px 9px 0!important;
+  border:1px solid #2f9e55!important;
+  border-left:0!important;
+  display:grid!important;
+  place-items:center!important;
+  align-self:stretch!important;
+}
+.area-customer .customer-company-field .customer-input-row #save-cust:hover{
+  filter:brightness(.96);
+}
+@media(max-width:900px){
+  .area-customer .customer-grid{
+    grid-template-columns:1fr!important;
+    row-gap:10px!important;
+  }
+}
