@@ -183,7 +183,15 @@
       String(r.services||'').split(',').map(v=>v.trim()).filter(v=>v&&v.toLowerCase()!=='none').forEach(v=>serviceSet.add(v.replace(/^.*?:/,'').replace(/^.*?\\]/,'').trim()));
     }
     const services=showServices?[...serviceSet].sort().join(', '):'';
-    const copy=['QUOTE #'+first.quote,'Date: '+first.date,'Customer: '+(first.company_name||''),'Address: '+(first.address||''),'Services: '+services,'',...lines.map(z=>z.product+', '+z.qty+(z.platform?' '+z.platform:'')+' 
+    const copy=['QUOTE #'+first.quote,'Date: '+first.date,'Customer: '+(first.company_name||''),'Address: '+(first.address||''),'Services: '+services,'',...lines.map(z=>z.product+', '+z.qty+(z.platform?' '+z.platform:'')+' lines.map(z=>'<tr><td style="padding:4px 6px;font-weight:700;border:0">'+esc(z.product)+',</td><td style="padding:4px 6px;white-space:nowrap;border:0">'+esc(z.qty)+'</td><td style="padding:4px 6px;font-weight:700;white-space:nowrap;border:0">'+esc(z.platform)+'</td><td style="padding:4px 6px;font-weight:700;white-space:nowrap;border:0">$ '+Number(z.price||0).toFixed(costMode?2:0)+'</td><td style="padding:4px 6px;border:0;color:#777">('+esc(z.config)+')</td><td style="padding:4px 6px;white-space:nowrap;border:0">'+esc(z.transport)+'</td></tr>').join('');
+    const serviceHtml=services?'<p style="margin:4px 0;color:#666"><i>Services: '+esc(services)+'</i></p>':'';
+    const body='<div style="font-family:Arial,sans-serif;font-size:14px;color:var(--bs-body-color)"><div style="margin-bottom:14px"><b>Quote: #'+esc(first.quote)+'</b></div><table style="width:100%;border-collapse:collapse;margin-bottom:18px"><tbody>'+rowHtml+'</tbody></table><p style="margin:2px 0"><b>'+esc(first.type||'')+'</b></p><p style="margin:2px 0"><b>'+esc(first.company_name||'')+'</b></p><p style="margin:2px 0">'+esc(first.address||'')+'</p>'+serviceHtml+'<div class="compat-action-row" style="justify-content:flex-end;margin-top:16px"><button class="btn primary" id="preview-copy">📋 Copiar (Correo)</button><button class="btn success" id="preview-pdf">📄 Preview PDF</button></div></div>';
+    window.openBootstrapModal('compatPreviewModal','Preview - Quote #'+first.quote,body,()=>{
+      $('#preview-copy').onclick=()=>copyText(copy).then(()=>toast('Cotización copiada al portapapeles')).catch(()=>toast('No se pudo copiar',false));
+      $('#preview-pdf').onclick=()=>printReport(costMode?'Quote Cost Preview':'Quote Preview','QUOTE #'+first.quote+' | DATE: '+first.date+' | CUSTOMER: '+(first.company_name||''),lines.map(z=>({PRODUCT:z.product,QTY:z.qty,PLATFORM:z.platform,PRICE:Number(z.price||0).toFixed(costMode?2:0),CONFIGURATION:z.config,TRANSPORT:z.transport})));
+    });
+  }
+  window.openPreview=compatOpenPreview;
 
   function copyText(text){
     if(navigator.clipboard?.writeText)return navigator.clipboard.writeText(text);
@@ -540,7 +548,7 @@
 
   // Patch existing current DOM and keep future renders patched.
   wireCurrent();
-})();+Number(z.price||0).toFixed(costMode?2:0)+' ('+z.config+') '+z.transport)].join('\n');
+})();+Number(z.price||0).toFixed(costMode?2:0)+' ('+z.config+') '+z.transport)].join(String.fromCharCode(10));
     const rowHtml=lines.map(z=>'<tr><td style="padding:4px 6px;font-weight:700;border:0">'+esc(z.product)+',</td><td style="padding:4px 6px;white-space:nowrap;border:0">'+esc(z.qty)+'</td><td style="padding:4px 6px;font-weight:700;white-space:nowrap;border:0">'+esc(z.platform)+'</td><td style="padding:4px 6px;font-weight:700;white-space:nowrap;border:0">$ '+Number(z.price||0).toFixed(costMode?2:0)+'</td><td style="padding:4px 6px;border:0;color:#777">('+esc(z.config)+')</td><td style="padding:4px 6px;white-space:nowrap;border:0">'+esc(z.transport)+'</td></tr>').join('');
     const serviceHtml=services?'<p style="margin:4px 0;color:#666"><i>Services: '+esc(services)+'</i></p>':'';
     const body='<div style="font-family:Arial,sans-serif;font-size:14px;color:var(--bs-body-color)"><div style="margin-bottom:14px"><b>Quote: #'+esc(first.quote)+'</b></div><table style="width:100%;border-collapse:collapse;margin-bottom:18px"><tbody>'+rowHtml+'</tbody></table><p style="margin:2px 0"><b>'+esc(first.type||'')+'</b></p><p style="margin:2px 0"><b>'+esc(first.company_name||'')+'</b></p><p style="margin:2px 0">'+esc(first.address||'')+'</p>'+serviceHtml+'<div class="compat-action-row" style="justify-content:flex-end;margin-top:16px"><button class="btn primary" id="preview-copy">📋 Copiar (Correo)</button><button class="btn success" id="preview-pdf">📄 Preview PDF</button></div></div>';
