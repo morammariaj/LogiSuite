@@ -736,7 +736,7 @@
     });
   }
 
-  async function compatLoadCrud(kind){
+  async function compatLoadCrudLegacyOld(kind){
     if(!sbx)return;const host=$('#crud-table');if(!host)return;const q=norm($('#crud-q')?.value||'');
     if(kind==='rules'){
       let rows=await allRows('rules');if(q)rows=rows.filter(r=>JSON.stringify(r).toUpperCase().includes(q));rows.sort((a,b)=>num(a.id_regla)-num(b.id_regla));
