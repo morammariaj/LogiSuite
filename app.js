@@ -8,6 +8,37 @@ const state={session:null,tab:'quote',dark:false,products:[],customers:[],verifi
 const services=['Airport','Commercial','Construction','Container Freight Station','Distribution Center','Dock/Pier','Government Facility','Limited Access','Residential/Non-Commercial','Secure Access','Tradeshow/Convention','Inside Delivery','Liftgate Delivery','Residential Delivery','Tradeshow Delivery','Construction Site Delivery','Notify Me Before Delivery','Hold Shipment at Terminal','Appointment Delivery','Airport Pickup','Commercial Pickup','Construction Pickup','CFS Pickup','Distribution Center Pickup','Dock/Pier Pickup','Government Facility Pickup','Limited Access Pickup','Residential/Non-Commercial Pickup','Secure Access Pickup','Tradeshow/Convention Pickup','Inside Pickup','Liftgate Pickup','Residential Pickup','Tradeshow Pickup','Construction Site Pickup','Drop Shipment at Terminal','Sort and Segregate','Protect from Freeze'];
 const carriers=['AAA Cooper','Estes','Southeastern','TForce','Others'];
 function toast(m,good=true){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t)}t.textContent=m;t.className='toast '+(good?'good':'bad');t.style.cssText='position:fixed;right:18px;bottom:18px;background:'+(good?'#137333':'#d93025')+';color:#fff;padding:11px 14px;border-radius:10px;z-index:10000;box-shadow:0 8px 30px rgba(0,0,0,.25);max-width:min(460px,calc(100vw - 28px));font-size:13px;font-weight:700';clearTimeout(t._hideTimer);t._hideTimer=setTimeout(()=>{t.textContent=''},2800)}
+let __logiLoadingCount=0,__logiLoadingTimer=null;
+function showLoading(message='Cargando información…'){
+ __logiLoadingCount++;
+ clearTimeout(__logiLoadingTimer);
+ __logiLoadingTimer=setTimeout(()=>{
+  let o=document.getElementById('logi-loading');
+  if(!o){
+   o=document.createElement('div');
+   o.id='logi-loading';
+   o.className='logi-loading';
+   o.setAttribute('role','status');
+   o.setAttribute('aria-live','polite');
+   o.innerHTML='<div class="logi-loading-card"><div class="logi-spinner"></div><div class="logi-loading-copy"><strong id="logi-loading-title">Cargando…</strong><span>Ten paciencia, LogiSuite está trabajando.</span></div></div>';
+   document.body.appendChild(o);
+  }
+  const t=o.querySelector('#logi-loading-title');
+  if(t)t.textContent=message;
+  o.classList.add('show');
+ },120);
+}
+function hideLoading(){
+ __logiLoadingCount=Math.max(0,__logiLoadingCount-1);
+ if(__logiLoadingCount>0)return;
+ clearTimeout(__logiLoadingTimer);
+ const o=document.getElementById('logi-loading');
+ if(o)o.classList.remove('show');
+}
+async function withLoading(message,fn){
+ showLoading(message);
+ try{return await fn()}finally{hideLoading()}
+}
 function appShell(){return '<div class="app-shell"><header class="app-topbar"><div class="brand-wrap"><img src="icon-192-lilac.svg" class="brand-icon" alt="LogiSuite"><div><div class="brand-name">LogiSuite</div><div class="brand-sub">Cotizador y gestión logística</div></div></div><div class="top-actions"><span class="status-pill '+(state.online?'online':'offline')+'"><i></i>'+(state.online?'Online':'Offline')+'</span><div class="time-widgets" aria-label="Relojes de trabajo"><div class="time-pill"><span>🇨🇴 Colombia</span><b id="clock-colombia">--:--:--</b></div><div class="time-pill"><span>🇺🇸 Miami</span><b id="clock-miami">--:--:--</b></div><span id="work-notice" class="work-notice hidden"></span></div><button class="btn btn-sm theme-btn" id="theme">'+(state.dark?'☀️ Claro':'🌙 Oscuro')+'</button><button class="btn btn-sm btn-outline-secondary" id="change-password">Cambiar contraseña</button><span class="user-name">'+esc(state.session?.user_metadata?.display_name||'María José')+'</span><button class="btn btn-sm btn-outline-secondary" id="logout">Cerrar sesión</button></div></header><main class="app-main"><div id="view"></div></main></div>';}
 function formatClock(timeZone){
  const p=new Intl.DateTimeFormat('es-CO',{timeZone,hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(new Date());
