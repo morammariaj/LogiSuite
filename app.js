@@ -30,7 +30,7 @@ function hideLoading(){
  const o=document.getElementById('logi-loading');
  if(o)o.classList.remove('show');
 }
-function appShell(){return '<div class="app-shell"><header class="app-topbar"><div class="brand-wrap"><img src="icon-192-lilac.svg" class="brand-icon" alt="LogiSuite"><div><div class="brand-name">LogiSuite</div><div class="brand-sub">Cotizador y gestión logística · v68</div></div></div><button type="button" class="mobile-menu-toggle" id="mobile-menu-toggle" aria-expanded="false" aria-controls="top-actions" aria-label="Abrir menú">☰</button><div class="top-actions" id="top-actions"><span class="status-pill '+(state.online?'online':'offline')+'"><i></i>'+(state.online?'Online':'Offline')+'</span><div class="time-widgets" aria-label="Relojes de trabajo"><div class="time-pill"><span>🇨🇴 Colombia</span><b id="clock-colombia">--:--:--</b></div><div class="time-pill"><span>🇺🇸 Miami</span><b id="clock-miami">--:--:--</b></div></div><span id="work-notice" class="work-notice hidden"></span><button type="button" class="btn btn-sm btn-outline-success" id="backup-local-db" title="Descargar las tres bases SQLite listas para reemplazar el sistema local">💾 DB Local</button><button type="button" class="btn btn-sm theme-btn" id="theme">'+(state.dark?'☀️ Claro':'🌙 Oscuro')+'</button><span class="user-name user-name-lilac">'+esc(state.session?.user_metadata?.display_name||'María José')+'</span><button type="button" class="btn btn-sm btn-outline-secondary" id="logout">Cerrar sesión</button></div></header><div class="mobile-menu-backdrop" id="mobile-menu-backdrop" aria-hidden="true"></div><main class="app-main"><div id="view"></div></main></div>';}
+function appShell(){return '<div class="app-shell"><header class="app-topbar"><div class="brand-wrap"><img src="icon-192-lilac.svg" class="brand-icon" alt="LogiSuite"><div><div class="brand-name">LogiSuite</div><div class="brand-sub">Cotizador y gestión logística</div></div></div><button type="button" class="mobile-menu-toggle" id="mobile-menu-toggle" aria-expanded="false" aria-controls="top-actions" aria-label="Abrir menú">☰</button><div class="top-actions" id="top-actions"><span class="status-pill '+(state.online?'online':'offline')+'"><i></i>'+(state.online?'Online':'Offline')+'</span><div class="time-widgets" aria-label="Relojes de trabajo"><div class="time-pill"><span>🇨🇴 Colombia</span><b id="clock-colombia">--:--:--</b></div><div class="time-pill"><span>🇺🇸 Miami</span><b id="clock-miami">--:--:--</b></div></div><span id="work-notice" class="work-notice hidden"></span><button type="button" class="btn btn-sm btn-outline-success" id="backup-local-db" title="Descargar las tres bases SQLite listas para reemplazar el sistema local">💾 DB Local</button><button type="button" class="btn btn-sm theme-btn" id="theme">'+(state.dark?'☀️ Claro':'🌙 Oscuro')+'</button><span class="btn btn-sm theme-btn user-name user-name-control">'+esc(state.session?.user_metadata?.display_name||'María José')+'</span><button type="button" class="btn btn-sm btn-outline-secondary" id="logout">Cerrar sesión</button></div></header><div class="mobile-menu-backdrop" id="mobile-menu-backdrop" aria-hidden="true"></div><main class="app-main"><div id="view"></div></main></div>';}
 function formatClock(timeZone){
  const parts=new Intl.DateTimeFormat('es-CO',{timeZone,hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true}).formatToParts(new Date());
  const get=t=>parts.find(x=>x.type===t)?.value||'00';
@@ -641,7 +641,23 @@ async function installApp(){
   try{await p.prompt();await p.userChoice}catch(_){}
   document.getElementById('install-invite')?.remove();
 }
-function showChangePassword(){const m=document.createElement('div');m.className='modal-back';m.innerHTML=`<div class="modal" style="max-width:430px"><div class="between"><h2>Cambiar contraseña</h2><button class="btn secondary close">Cerrar</button></div><label><span class="label">Nueva contraseña</span><input id="cp1" class="input" type="password"></label><label style="display:block;margin-top:10px"><span class="label">Repetir contraseña</span><input id="cp2" class="input" type="password"></label><div id="cpm" class="muted" style="margin:10px 0"></div><button class="btn success" id="cps">Guardar</button></div>`;document.body.appendChild(m);m.querySelector('.close').onclick=()=>m.remove();m.querySelector('#cps').onclick=async()=>{const a=m.querySelector('#cp1').value,b=m.querySelector('#cp2').value;if(a!==b){m.querySelector('#cpm').textContent='Las contraseñas no coinciden';return}const {error}=await sb.auth.updateUser({password:a});m.querySelector('#cpm').textContent=error?error.message:'Contraseña actualizada';if(!error)setTimeout(()=>m.remove(),900)}}
-async function init(){setupInstallInvite();if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw-fresh-67.js?v=67').catch(()=>{});if(!sb){login();return}const {data}=await sb.auth.getSession();if(data.session)start(data.session);else login();sb.auth.onAuthStateChange((e,s)=>{if(e==='SIGNED_OUT')login();if(e==='PASSWORD_RECOVERY')showReset()});if(location.hash==='#reset')showReset()}
+async function init(){
+ setupInstallInvite();
+ if('serviceWorker' in navigator){
+  try{
+   const regs=await navigator.serviceWorker.getRegistrations();
+   await Promise.all(regs.filter(r=>!r.active?.scriptURL.endsWith('/sw.js')).map(r=>r.unregister()));
+  }catch(e){}
+  navigator.serviceWorker.register('./sw.js?v=clean1').catch(()=>{});
+ }
+ if(!sb){login();return}
+ const {data}=await sb.auth.getSession();
+ if(data.session)start(data.session);else login();
+ sb.auth.onAuthStateChange((e,s)=>{
+  if(e==='SIGNED_OUT')login();
+  if(e==='PASSWORD_RECOVERY')showReset();
+ });
+ if(location.hash==='#reset')showReset()
+}
 function showReset(){const m=document.createElement('div');m.className='modal-back';m.innerHTML=`<div class="modal" style="max-width:420px"><h2>Cambiar contraseña</h2><label><span class="label">Nueva contraseña</span><input id="np" class="input" type="password"></label><label style="display:block;margin-top:10px"><span class="label">Repetir contraseña</span><input id="np2" class="input" type="password"></label><div id="nm" class="muted" style="margin:10px 0"></div><button class="btn success" id="nps">Guardar</button></div>`;document.body.appendChild(m);m.querySelector('#nps').onclick=async()=>{if($('#np').value!==$('#np2').value){$('#nm').textContent='Las contraseñas no coinciden';return}const {error}=await sb.auth.updateUser({password:$('#np').value});$('#nm').textContent=error?error.message:'Contraseña actualizada correctamente';if(!error)setTimeout(()=>m.remove(),1000)}}
 init();
