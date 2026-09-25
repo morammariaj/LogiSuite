@@ -170,10 +170,20 @@
       const price=costMode?actualMinCost(r).cost:num(r.better_shipping_price);
       return {r,best,price};
     });
+    const title=costMode?'COST':'SP';
+    const modeLabel=costMode?'COST':'SP';
+    const clipboard=[`QUOTE #${first.quote||''}`,`Date: ${first.date||''}`,`Customer: ${first.company_name||''}`,`Address: ${first.address||''}`,`Type: ${first.type||''}`,`Services: ${first.services||''}`,'',` ${modeLabel} DETAILS`.trim(),'','SKU | PRODUCT | QTY | PRICE/CASE | REVENUE | PLATFORM | '+(costMode?'COST':'SHIPPING PRICE')+' | CONFIGURATION',...rows.map(x=>[
+      x.r.sku||'',x.r.product||'',x.r.qty??'',num(x.r.price_per_case).toFixed(2),`${x.r.revenue??''}%`,x.best||'',Number(x.price||0).toFixed(2),x.r.applied_configuration||''
+    ].join(' | '))].join('\n');
+    const copyIcon='<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" width="16" height="16"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>';
     const body=`<div class="compat-report-meta"><span class="compat-badge">QUOTE #${esc(first.quote)}</span><span class="compat-badge">${esc(first.date)}</span><span class="compat-badge">${esc(first.type)}</span></div>
       <div class="modal-summary"><div><b>${esc(first.company_name||'')}</b><div class="muted">${esc(first.address||'')}</div><div class="muted">Services: ${esc(first.services||'')}</div></div></div>
+      <div class="compat-preview-actions"><button type="button" class="btn success compat-copy-btn" id="preview-copy" title="Copy ${modeLabel} details" aria-label="Copy ${modeLabel} details">${copyIcon}<span>Copy</span></button></div>
       <div class="compat-scroll"><table class="data-table"><thead><tr><th>SKU</th><th>PRODUCT</th><th>QTY</th><th>PRICE/CASE</th><th>REVENUE</th><th>${costMode?'PLATFORM (COST)':'PLATFORM'}</th><th>${costMode?'COST':'SHIPPING PRICE'}</th><th>CONFIGURATION</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.r.sku)}</td><td>${esc(x.r.product)}</td><td>${esc(x.r.qty)}</td><td>$${num(x.r.price_per_case).toFixed(2)}</td><td>${esc(x.r.revenue)}%</td><td>${esc(x.best)}</td><td>$${Number(x.price||0).toFixed(costMode?2:0)}</td><td>${esc(x.r.applied_configuration||'')}</td></tr>`).join('')}</tbody></table></div>`;
-    window.openBootstrapModal('compatPreviewModal',`Quote #${first.quote} — ${costMode?'COST':'SP'}`,body,()=>{});
+    window.openBootstrapModal('compatPreviewModal',`Quote #${first.quote} — ${costMode?'COST':'SP'}`,body,()=>{
+      const btn=$('#preview-copy');
+      if(btn)btn.onclick=()=>copyText(clipboard).then(()=>toast(`${title} details copied to clipboard`)).catch(()=>toast('Could not copy',false));
+    });
   }
   window.openPreview=compatOpenPreview;
 
