@@ -2521,3 +2521,8 @@ body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;bo
     font-size:10px!important;
   }
 }
+
+
+/* ===== v62: SQL backup removed from the UI ===== */
+#backup-sql{display:none!important}
+@media(max-width:1000px){#backup-sql{display:none!important}}
