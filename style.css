@@ -2679,3 +2679,27 @@ body[data-bs-theme=dark] .user-name-lilac:hover{
     padding:6px 12px!important;
   }
 }
+
+
+/* ===== v68: exact user control visual parity ===== */
+.user-name.user-name-lilac{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  height:40px!important;
+  min-height:40px!important;
+  padding:0 12px!important;
+  margin:0!important;
+  width:auto!important;
+  min-width:112px!important;
+  box-sizing:border-box!important;
+  border:1px solid #e1dcf2!important;
+  border-radius:9px!important;
+  background:#eeeafb!important;
+  color:#554a74!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+  box-shadow:none!important;
+}
