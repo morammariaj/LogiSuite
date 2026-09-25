@@ -2409,7 +2409,6 @@ body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;bo
   }
   .top-actions #backup-local-db{grid-column:1!important;order:4!important}
   .top-actions #theme{grid-column:1!important;order:5!important}
-  .top-actions #change-password{grid-column:2!important;order:5!important}
   .top-actions #logout{grid-column:1/-1!important;order:7!important}
   .top-actions .user-name{
     grid-column:1/-1!important;
@@ -2523,34 +2522,25 @@ body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;bo
 }
 
 
-/* ===== v62: SQL backup removed from the UI ===== */
-#backup-sql{display:none!important}
-@media(max-width:1000px){#backup-sql{display:none!important}}
 
 
-/* ===== v65: logged-in user pill + compact quote action buttons ===== */
-.user-name-pill{
+/* ===== LogiSuite clean final controls ===== */
+.user-name-control{
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
+  box-sizing:border-box!important;
   width:auto!important;
   min-width:0!important;
+  height:40px!important;
+  min-height:40px!important;
   margin:0!important;
-  padding:7px 11px!important;
-  border:1px solid #d8cff4!important;
+  padding:0 12px!important;
   border-radius:9px!important;
-  background:#eeeafb!important;
-  color:#554a74!important;
+  white-space:nowrap!important;
   font-size:11px!important;
   font-weight:800!important;
   line-height:1!important;
-  white-space:nowrap!important;
-  box-sizing:border-box!important;
-}
-body[data-bs-theme=dark] .user-name-pill{
-  background:#302a38!important;
-  border-color:#4a4154!important;
-  color:#f0eaf8!important;
 }
 .modal-content-panel .data-table td.compat-quote-actions{
   display:table-cell!important;
@@ -2575,6 +2565,23 @@ body[data-bs-theme=dark] .user-name-pill{
   font-size:11px!important;
   line-height:1!important;
 }
+@media(max-width:1000px){
+  .top-actions #theme{
+    grid-column:1/-1!important;
+    width:100%!important;
+    min-width:0!important;
+    height:40px!important;
+    min-height:40px!important;
+    justify-self:stretch!important;
+  }
+  .top-actions .user-name-control{
+    grid-column:1/-1!important;
+    width:100%!important;
+    min-width:0!important;
+    height:40px!important;
+    min-height:40px!important;
+  }
+}
 @media(max-width:520px){
   .modal-content-panel .data-table td.compat-quote-actions{
     min-width:360px!important;
@@ -2587,119 +2594,4 @@ body[data-bs-theme=dark] .user-name-pill{
     font-size:10px!important;
     margin:0 2px!important;
   }
-  .user-name-pill{font-size:10px!important;padding:7px 10px!important}
-}
-
-
-/* ===== v66: user button without icon, matching lilac controls ===== */
-.user-name-pill{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  box-sizing:border-box!important;
-  width:auto!important;
-  min-width:112px!important;
-  height:40px!important;
-  padding:0 13px!important;
-  border:1px solid rgba(142,121,232,.28)!important;
-  border-radius:9px!important;
-  background:rgba(142,121,232,.12)!important;
-  color:var(--ls-lilac-dark)!important;
-  font-size:11px!important;
-  font-weight:800!important;
-  line-height:1!important;
-  white-space:nowrap!important;
-}
-.user-name-pill:hover{
-  background:rgba(142,121,232,.18)!important;
-  border-color:rgba(142,121,232,.38)!important;
-}
-body[data-bs-theme=dark] .user-name-pill{
-  background:rgba(142,121,232,.18)!important;
-  border-color:rgba(173,157,244,.30)!important;
-  color:#d9d0ff!important;
-}
-body[data-bs-theme=dark] .user-name-pill:hover{
-  background:rgba(142,121,232,.25)!important;
-  border-color:rgba(173,157,244,.42)!important;
-}
-@media(max-width:1000px){
-  .top-actions .user-name-pill{
-    width:100%!important;
-    min-width:0!important;
-    height:40px!important;
-    grid-column:1/-1!important;
-    padding:0 12px!important;
-  }
-}
-
-
-/* ===== v67: exact same button treatment as header controls, lilac transparent ===== */
-.user-name-lilac{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  box-sizing:border-box!important;
-  width:auto!important;
-  min-width:0!important;
-  height:40px!important;
-  min-height:40px!important;
-  margin:0!important;
-  padding:6px 12px!important;
-  border:1px solid #e1dcf2!important;
-  border-radius:9px!important;
-  background:#eeeafb!important;
-  color:#554a74!important;
-  font-size:11px!important;
-  font-weight:800!important;
-  line-height:1!important;
-  white-space:nowrap!important;
-}
-.user-name-lilac:hover{
-  background:#e4def7!important;
-  border-color:#d8cfee!important;
-  color:#554a74!important;
-}
-body[data-bs-theme=dark] .user-name-lilac{
-  background:#302a38!important;
-  border-color:#4a4154!important;
-  color:#f0eaf8!important;
-}
-body[data-bs-theme=dark] .user-name-lilac:hover{
-  background:#372f42!important;
-  border-color:#5a5066!important;
-  color:#fff!important;
-}
-@media(max-width:1000px){
-  .top-actions .user-name-lilac{
-    width:100%!important;
-    min-width:0!important;
-    height:40px!important;
-    min-height:40px!important;
-    padding:6px 12px!important;
-  }
-}
-
-
-/* ===== v68: exact user control visual parity ===== */
-.user-name.user-name-lilac{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  height:40px!important;
-  min-height:40px!important;
-  padding:0 12px!important;
-  margin:0!important;
-  width:auto!important;
-  min-width:112px!important;
-  box-sizing:border-box!important;
-  border:1px solid #e1dcf2!important;
-  border-radius:9px!important;
-  background:#eeeafb!important;
-  color:#554a74!important;
-  font-size:11px!important;
-  font-weight:800!important;
-  line-height:1!important;
-  white-space:nowrap!important;
-  box-shadow:none!important;
 }
