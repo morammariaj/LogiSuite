@@ -2587,31 +2587,3 @@ body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;bo
     margin:0 2px!important;
   }
 }
-
-/* Quote preview copy control: desktop + responsive */
-.compat-preview-actions{
-  display:flex!important;
-  justify-content:flex-end!important;
-  align-items:center!important;
-  gap:8px!important;
-  margin:0 0 10px!important;
-}
-.compat-copy-btn{
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:7px!important;
-  min-width:88px!important;
-  min-height:34px!important;
-  padding:7px 13px!important;
-  border-radius:8px!important;
-  font-size:12px!important;
-  font-weight:800!important;
-  line-height:1!important;
-  white-space:nowrap!important;
-}
-.compat-copy-btn svg{display:block!important;flex:0 0 auto!important}
-@media(max-width:520px){
-  .compat-preview-actions{justify-content:stretch!important}
-  .compat-copy-btn{width:100%!important;min-height:38px!important}
-}
