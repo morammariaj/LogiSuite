@@ -2529,14 +2529,12 @@ body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;bo
   box-sizing:border-box!important;
   width:auto!important;
   min-width:0!important;
-  min-height:40px!important;
-  height:40px!important;
   margin:0!important;
-  padding:6px 12px!important;
+  padding:6px 11px!important;
   white-space:nowrap!important;
-  font-size:11px!important;
+  font-size:12px!important;
   font-weight:800!important;
-  line-height:1!important;
+  line-height:1.1!important;
 }
 .modal-content-panel .data-table td.compat-quote-actions{
   display:table-cell!important;
@@ -2574,8 +2572,6 @@ body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;bo
     grid-column:1/-1!important;
     width:100%!important;
     min-width:0!important;
-    min-height:40px!important;
-    height:40px!important;
   }
 }
 @media(max-width:520px){
