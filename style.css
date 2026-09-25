@@ -2490,10 +2490,7 @@ body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;bo
     grid-column:1/-1!important;
     width:100%!important;
   }
-  .top-actions #theme,
-  .top-actions #change-password{
-    width:100%!important;
-  }
+  .top-actions #theme
   .top-actions #logout{
     grid-column:1/-1!important;
     width:100%!important;
