@@ -2632,3 +2632,50 @@ body[data-bs-theme=dark] .user-name-pill:hover{
     padding:0 12px!important;
   }
 }
+
+
+/* ===== v67: exact same button treatment as header controls, lilac transparent ===== */
+.user-name-lilac{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  width:auto!important;
+  min-width:0!important;
+  height:40px!important;
+  min-height:40px!important;
+  margin:0!important;
+  padding:6px 12px!important;
+  border:1px solid #e1dcf2!important;
+  border-radius:9px!important;
+  background:#eeeafb!important;
+  color:#554a74!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+.user-name-lilac:hover{
+  background:#e4def7!important;
+  border-color:#d8cfee!important;
+  color:#554a74!important;
+}
+body[data-bs-theme=dark] .user-name-lilac{
+  background:#302a38!important;
+  border-color:#4a4154!important;
+  color:#f0eaf8!important;
+}
+body[data-bs-theme=dark] .user-name-lilac:hover{
+  background:#372f42!important;
+  border-color:#5a5066!important;
+  color:#fff!important;
+}
+@media(max-width:1000px){
+  .top-actions .user-name-lilac{
+    width:100%!important;
+    min-width:0!important;
+    height:40px!important;
+    min-height:40px!important;
+    padding:6px 12px!important;
+  }
+}
