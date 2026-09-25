@@ -2587,3 +2587,52 @@ body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;bo
     margin:0 2px!important;
   }
 }
+
+/* ===== FIX View Quotes action-cell layout ===== */
+.modal-content-panel .data-table td.compat-quote-actions{
+  display:table-cell!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  padding:9px 10px!important;
+  text-align:center!important;
+  vertical-align:middle!important;
+  white-space:nowrap!important;
+}
+.modal-content-panel .data-table td.compat-quote-actions::before,
+.modal-content-panel .data-table td.compat-quote-actions::after{display:none!important;content:none!important}
+.compat-quote-actions-inner{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex-wrap:nowrap!important;
+  gap:6px!important;
+  width:max-content!important;
+  min-width:0!important;
+  margin:0 auto!important;
+}
+.compat-quote-actions-inner .btn{
+  display:inline-flex!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:72px!important;
+  max-width:none!important;
+  height:34px!important;
+  min-height:34px!important;
+  margin:0!important;
+  padding:6px 12px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border-radius:8px!important;
+  white-space:nowrap!important;
+  font-size:11px!important;
+  line-height:1!important;
+}
+@media(max-width:900px){
+  .modal-content-panel .data-table td.compat-quote-actions{min-width:0!important}
+  .compat-quote-actions-inner{gap:5px!important}
+  .compat-quote-actions-inner .btn{min-width:70px!important}
+}
+@media(max-width:520px){
+  .compat-quote-actions-inner .btn{min-width:64px!important;height:32px!important;min-height:32px!important;padding:5px 9px!important;font-size:10px!important}
+}
