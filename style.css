@@ -2099,8 +2099,8 @@ body[data-bs-theme=dark] .logi-loading-card{
 @media(max-width:1000px){
   .app-topbar{position:sticky;top:0;z-index:3000;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;height:auto;min-height:56px;padding:8px 10px}
   .mobile-menu-toggle{display:flex;position:relative;z-index:3200}
-  .top-actions{display:none;position:absolute;top:calc(100% + 6px);left:8px;right:8px;z-index:3100;padding:10px;border:1px solid var(--ls-border);border-radius:14px;background:rgba(255,255,255,.99);box-shadow:0 16px 36px rgba(40,30,70,.24);grid-template-columns:1fr 1fr;align-items:stretch;gap:7px;max-height:calc(100dvh - 78px);overflow-y:auto;overscroll-behavior:contain}
-  .top-actions.mobile-open{display:grid}
+  .top-actions{display:none!important;position:absolute;top:calc(100% + 6px);left:8px;right:8px;z-index:3100;padding:10px;border:1px solid var(--ls-border);border-radius:14px;background:rgba(255,255,255,.99);box-shadow:0 16px 36px rgba(40,30,70,.24);grid-template-columns:1fr 1fr;align-items:stretch;gap:7px;max-height:calc(100dvh - 78px);overflow-y:auto;overscroll-behavior:contain}
+  .top-actions.mobile-open{display:grid!important}
   .top-actions .status-pill{grid-column:1/-1;justify-self:start}
   .top-actions .time-widgets{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;grid-column:1/-1}
   .top-actions .time-pill{min-width:0}
