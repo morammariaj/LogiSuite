@@ -2522,18 +2522,17 @@ body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;bo
 
 
 /* ===== LogiSuite clean final controls ===== */
-.user-name-control{
+.top-actions .user-name-control{
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
   box-sizing:border-box!important;
   width:auto!important;
   min-width:0!important;
-  height:40px!important;
   min-height:40px!important;
+  height:40px!important;
   margin:0!important;
-  padding:0 12px!important;
-  border-radius:9px!important;
+  padding:6px 12px!important;
   white-space:nowrap!important;
   font-size:11px!important;
   font-weight:800!important;
@@ -2567,16 +2566,16 @@ body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;bo
     grid-column:1/-1!important;
     width:100%!important;
     min-width:0!important;
-    height:40px!important;
     min-height:40px!important;
+    height:40px!important;
     justify-self:stretch!important;
   }
   .top-actions .user-name-control{
     grid-column:1/-1!important;
     width:100%!important;
     min-width:0!important;
-    height:40px!important;
     min-height:40px!important;
+    height:40px!important;
   }
 }
 @media(max-width:520px){
