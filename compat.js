@@ -1,4 +1,4 @@
-/* LogiSuite compatibility layer — v42
+/* LogiSuite compatibility layer — clean
  * Brings the web UI/functionality closer to the desktop reference without
  * replacing the existing calculation engine. Loaded after app.js.
  */
