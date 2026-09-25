@@ -187,109 +187,12 @@
   function sqlInsert(table,columns,values){
     return 'INSERT INTO '+table+' ('+columns.map(sqlIdent).join(', ')+') VALUES ('+values.map(sqlLiteral).join(', ')+');';
   }
-  function buildLogiSuiteSql(d){
-    const out=[];
-    out.push('-- LogiSuite local database backup / restore');
-    out.push('-- Generated: '+new Date().toISOString());
-    out.push('-- IMPORTANT: close LogiSuite local before restoring.');
-    out.push('-- Put this .sql beside products.db, quotes.db and rules.db.');
-    out.push('-- Run with SQLite CLI from that folder, for example:');
-    out.push('-- sqlite3 _logisuite_restore_anchor.db ".read LogiSuite_Backup.sql"');
-    out.push('-- The script recreates the operational tables inside the three attached DB files.');
-    out.push('-- It uses the current Supabase operational data as the source of truth.');
-    out.push('-- Historical backup-only tables from the desktop are intentionally not recreated.');
-    out.push('PRAGMA foreign_keys=OFF;');
-    out.push('BEGIN;');
-    // products.db
-    out.push("ATTACH DATABASE 'products.db' AS products_db;");
-    out.push('DROP TABLE IF EXISTS products_db."productos";');
-    out.push('DROP TABLE IF EXISTS products_db."clientes";');
-    out.push('DROP TABLE IF EXISTS products_db."verificados";');
-    out.push('DROP TABLE IF EXISTS products_db."local_delivery_cost_history";');
-    out.push('CREATE TABLE products_db."productos" ("SKU" TEXT,"Lista de Productos" TEXT,"CATEGORÍA" TEXT,"TIPO" TEXT,"PAPER/OZ" TEXT,"COLOR" TEXT,"PRODUCTO" TEXT,"PAQUETE DE CAJAS/UNTLS" TEXT,"PESO" TEXT,"ALTURA" TEXT,"Ti" TEXT,"Hi" TEXT,"TiHi" REAL,"DIMENSIONES" TEXT,"Length" TEXT,"Width" TEXT,"Height in" TEXT,"INFORMACIÓN" TEXT,"NOTA" TEXT);');
-    out.push('CREATE TABLE products_db."clientes" ("ID Cliente" INTEGER PRIMARY KEY AUTOINCREMENT,"ID" TEXT,"Type" TEXT,"Company or Name" TEXT,"ZIP CODE/ADDRESS" TEXT,"Accesories" TEXT,"Costo LD 1er Pallet" TEXT,"Costo LD Extra" TEXT);');
-    out.push('CREATE TABLE products_db."verificados" ("FECHA" TEXT,"HORA" TEXT,"LISTA DE PRODUCTOS" TEXT,"CANTIDAD" TEXT,"CONFIGURACIÓN VERIFICADA" TEXT,"MEDIO INFORMATIVO" TEXT,"CATEGORÍA" TEXT,"TIPO" TEXT,"PAQUETE DE CAJAS/UND" TEXT,"DIMENSIONES" TEXT,"NOTAS" TEXT,"ESTADO" TEXT DEFAULT ' + sqlLiteral('VIGENTE') + ');');
-    out.push('CREATE TABLE products_db."local_delivery_cost_history" ("ID" INTEGER PRIMARY KEY AUTOINCREMENT,"ID Cliente" INTEGER,"ID CLIENTE CODE" TEXT,"Type" TEXT DEFAULT ' + sqlLiteral('Local Delivery') + ',"Company or Name" TEXT NOT NULL,"ZIP CODE/ADDRESS" TEXT NOT NULL,"DATE" TEXT NOT NULL,"Costo LD 1er Pallet" REAL,"Costo LD Extra" REAL);');
-    const pc=['SKU','Lista de Productos','CATEGORÍA','TIPO','PAPER/OZ','COLOR','PRODUCTO','PAQUETE DE CAJAS/UNTLS','PESO','ALTURA','Ti','Hi','TiHi','DIMENSIONES','Length','Width','Height in','INFORMACIÓN','NOTA'];
-    (d.products||[]).sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>out.push(sqlInsert('products_db."productos"',pc,[r.sku,r.product_list,r.category,r.product_type,r.paper_oz,r.color,r.product,r.package_units,r.weight,r.height,r.ti,r.hi,r.tihi,r.dimensions,r.length_in,r.width_in,r.height_in,r.information,r.note])));
-    const cc=['ID Cliente','ID','Type','Company or Name','ZIP CODE/ADDRESS','Accesories','Costo LD 1er Pallet','Costo LD Extra'];
-    (d.customers||[]).sort((a,b)=>num(a.id_cliente)-num(b.id_cliente)).forEach(r=>out.push(sqlInsert('products_db."clientes"',cc,[r.id_cliente,r.id_code,r.type,r.company_name,r.address,r.accessories,r.local_delivery_cost_1,r.local_delivery_cost_extra])));
-    const vc=['FECHA','HORA','LISTA DE PRODUCTOS','CANTIDAD','CONFIGURACIÓN VERIFICADA','MEDIO INFORMATIVO','CATEGORÍA','TIPO','PAQUETE DE CAJAS/UND','DIMENSIONES','NOTAS','ESTADO'];
-    (d.verified||[]).sort((a,b)=>num(b.id)-num(a.id)).forEach(r=>out.push(sqlInsert('products_db."verificados"',vc,[r.date,r.time,r.product_list,r.quantity,r.verified_config,r.information_source,r.category,r.product_type,r.package_units,r.dimensions,r.notes,r.status||'VIGENTE'])));
-    const lc=['ID','ID Cliente','ID CLIENTE CODE','Type','Company or Name','ZIP CODE/ADDRESS','DATE','Costo LD 1er Pallet','Costo LD Extra'];
-    (d.ld||[]).sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>out.push(sqlInsert('products_db."local_delivery_cost_history"',lc,[r.id,r.id_cliente,r.id_cliente_code,r.type||'Local Delivery',r.company_name,r.address,r.date,r.cost_1,r.cost_extra])));
-    out.push('DELETE FROM products_db.sqlite_sequence WHERE name IN (' + ['clientes','local_delivery_cost_history'].map(sqlLiteral).join(',') + ');');
-    out.push('INSERT INTO products_db.sqlite_sequence(name,seq) SELECT ' + sqlLiteral('clientes') + ', COALESCE(MAX("ID Cliente"),0) FROM products_db."clientes";');
-    out.push('INSERT INTO products_db.sqlite_sequence(name,seq) SELECT ' + sqlLiteral('local_delivery_cost_history') + ', COALESCE(MAX("ID"),0) FROM products_db."local_delivery_cost_history";');
-    out.push('COMMIT;');
-    out.push('DETACH DATABASE products_db;');
-    // quotes.db
-    out.push('BEGIN;');
-    out.push("ATTACH DATABASE 'quotes.db' AS quotes_db;");
-    out.push('DROP TABLE IF EXISTS quotes_db."Data_Base_Quotes";');
-    out.push('DROP TABLE IF EXISTS quotes_db."Data_Base_Local_Quotes";');
-    out.push('DROP TABLE IF EXISTS quotes_db."cotizaciones";');
-    out.push('CREATE TABLE quotes_db."Data_Base_Quotes" ("ID" INTEGER PRIMARY KEY AUTOINCREMENT,"ID_REGISTRO" TEXT,"DATE" TEXT,"EMAIL" TEXT,"QUOTE" TEXT,"ZIP CODE/ ADDRESS" TEXT,"COMPANY OR NAME" TEXT,"TYPE" TEXT,"SKU" TEXT,"PRODUCT" TEXT,"QTY" INTEGER,"PRICE PER CASE" REAL,"REVENUE" REAL,"INSURED VALUE" REAL,"BETTER COST" REAL,"BETTER SHIPING PRICE" REAL,"BETTER PLATFORM" TEXT,"APPLIED CONFIGURATION/Detail products" TEXT,"COST WWE" REAL,"SP WWE" REAL,"TRANSPORT WWE" TEXT,"COST UPS" REAL,"SP UPS" REAL,"COST CBCFS" REAL,"SP CBCFS" REAL,"TRANSPORT CBCFS" TEXT,"COST UBER FREIGHT TL" REAL,"SP UBER FREIGHT TL" REAL,"COST UBER FREIGHT LTL" REAL,"SP UBER FREIGHT LTL" REAL,"TRANSPORT UBER FREIGHT LTL" TEXT,"COST FEDEX" REAL,"SP FEDEX" REAL,"COST LOCAL DELIVERY" REAL,"SP LOCAL DELIVERY" REAL,"SERVICES" TEXT,"NOTA" TEXT,"FORM_STATE" TEXT,"QUOTE_INSTANCE_ID" TEXT);');
-    out.push('CREATE TABLE quotes_db."Data_Base_Local_Quotes" ("ID" INTEGER PRIMARY KEY AUTOINCREMENT,"ID_REGISTRO" TEXT,"DATE" TEXT,"EMAIL" TEXT,"QUOTE" TEXT,"ZIP CODE/ ADDRESS" TEXT,"COMPANY OR NAME" TEXT,"TYPE" TEXT,"SKU" TEXT,"PRODUCT" TEXT,"QTY" INTEGER,"PRICE PER CASE" REAL,"REVENUE" REAL,"INSURED VALUE" REAL,"BETTER COST" REAL,"BETTER SHIPING PRICE" REAL,"BETTER PLATFORM" TEXT,"APPLIED CONFIGURATION/Detail products" TEXT,"COST WWE" REAL,"SP WWE" REAL,"TRANSPORT WWE" TEXT,"COST UPS" REAL,"SP UPS" REAL,"COST CBCFS" REAL,"SP CBCFS" REAL,"TRANSPORT CBCFS" TEXT,"COST UBER FREIGHT TL" REAL,"SP UBER FREIGHT TL" REAL,"COST UBER FREIGHT LTL" REAL,"SP UBER FREIGHT LTL" REAL,"TRANSPORT UBER FREIGHT LTL" TEXT,"COST FEDEX" REAL,"SP FEDEX" REAL,"COST LOCAL DELIVERY" REAL,"SP LOCAL DELIVERY" REAL,"SERVICES" TEXT,"NOTA" TEXT,"PALLETS REQUIRED" REAL,"COST OF PALLET 1" REAL,"COST OF EXTRA PALLETS" REAL,"FORM_STATE" TEXT,"QUOTE_INSTANCE_ID" TEXT);');
-    out.push('CREATE TABLE quotes_db."cotizaciones" ("ID_REGISTRO" TEXT,"DATE" TEXT,"EMAIL" TEXT,"#QUOTE" TEXT,"ZIP/ADDRESS" TEXT,"COMPANY OR NAME" TEXT,"TYPE" TEXT,"SKU" TEXT,"PRODUCT" TEXT,"QTY" TEXT,"PRICE PER CASE" TEXT,"REVENUE" TEXT,"INSURED VALUE" TEXT,"BETTER COST" TEXT,"BETTER SHIPPING PRICE" TEXT,"BETTER PLATFORM" TEXT,"APPLIED CONFIGURATION" TEXT,"COST WWE" TEXT,"SP WWE" TEXT,"COST UPS" TEXT,"SP UPS" TEXT,"COST CBCFS" TEXT,"SP CBCFS" TEXT,"COST FEDEX" TEXT,"SP FEDEX" TEXT,"COST UBER FREIGHT TL" TEXT,"SP UBER FREIGHT TL" TEXT,"COST UBER FREIGHT LTL" TEXT,"SP UBER FREIGHT LTL" TEXT,"COST LOCAL DELIVERY" TEXT,"SP LOCAL DELIVERY" TEXT,"SERVICES" TEXT);');
-    const qc=['ID','ID_REGISTRO','DATE','EMAIL','QUOTE','ZIP CODE/ ADDRESS','COMPANY OR NAME','TYPE','SKU','PRODUCT','QTY','PRICE PER CASE','REVENUE','INSURED VALUE','BETTER COST','BETTER SHIPING PRICE','BETTER PLATFORM','APPLIED CONFIGURATION/Detail products','COST WWE','SP WWE','TRANSPORT WWE','COST UPS','SP UPS','TRANSPORT UPS','COST CBCFS','SP CBCFS','TRANSPORT CBCFS','COST UBER FREIGHT TL','SP UBER FREIGHT TL','COST UBER FREIGHT LTL','SP UBER FREIGHT LTL','TRANSPORT UBER FREIGHT LTL','COST FEDEX','SP FEDEX','COST LOCAL DELIVERY','SP LOCAL DELIVERY','SERVICES','NOTA','FORM_STATE','QUOTE_INSTANCE_ID'];
-    for(const r of [...(d.quotes||[])].sort((a,b)=>num(a.id)-num(b.id)))out.push(sqlInsert('quotes_db."Data_Base_Quotes"',qc,[r.id,r.id_registro,r.date,r.email,r.quote,r.address,r.company_name,r.type,r.sku,r.product,r.qty,r.price_per_case,r.revenue,r.insured_value,r.better_cost,r.better_shipping_price,r.better_platform,r.applied_configuration,r.cost_wwe,r.sp_wwe,r.transport_wwe,r.cost_ups,r.sp_ups,r.transport_ups,r.cost_cbcfs,r.sp_cbcfs,r.transport_cbcfs,r.cost_uber_freight_tl,r.sp_uber_freight_tl,r.cost_uber_freight_ltl,r.sp_uber_freight_ltl,r.transport_uber_freight_ltl,r.cost_fedex,r.sp_fedex,r.cost_local_delivery,r.sp_local_delivery,r.services,r.nota,typeof r.form_state==='object'&&r.form_state!==null?JSON.stringify(r.form_state):r.form_state,r.quote_instance_id]));
-    const qlc=['ID','ID_REGISTRO','DATE','EMAIL','QUOTE','ZIP CODE/ ADDRESS','COMPANY OR NAME','TYPE','SKU','PRODUCT','QTY','PRICE PER CASE','REVENUE','INSURED VALUE','BETTER COST','BETTER SHIPING PRICE','BETTER PLATFORM','APPLIED CONFIGURATION/Detail products','COST WWE','SP WWE','TRANSPORT WWE','COST UPS','SP UPS','TRANSPORT UPS','COST CBCFS','SP CBCFS','TRANSPORT CBCFS','COST UBER FREIGHT TL','SP UBER FREIGHT TL','COST UBER FREIGHT LTL','SP UBER FREIGHT LTL','TRANSPORT UBER FREIGHT LTL','COST FEDEX','SP FEDEX','COST LOCAL DELIVERY','SP LOCAL DELIVERY','SERVICES','NOTA','PALLETS REQUIRED','COST OF PALLET 1','COST OF EXTRA PALLETS','FORM_STATE','QUOTE_INSTANCE_ID'];
-    for(const r of [...(d.local_quotes||[])].sort((a,b)=>num(a.id)-num(b.id)))out.push(sqlInsert('quotes_db."Data_Base_Local_Quotes"',qlc,[r.id,r.id_registro,r.date,r.email,r.quote,r.address,r.company_name,r.type,r.sku,r.product,r.qty,r.price_per_case,r.revenue,r.insured_value,r.better_cost,r.better_shipping_price,r.better_platform,r.applied_configuration,r.cost_wwe,r.sp_wwe,r.transport_wwe,r.cost_ups,r.sp_ups,r.transport_ups,r.cost_cbcfs,r.sp_cbcfs,r.transport_cbcfs,r.cost_uber_freight_tl,r.sp_uber_freight_tl,r.cost_uber_freight_ltl,r.sp_uber_freight_ltl,r.transport_uber_freight_ltl,r.cost_fedex,r.sp_fedex,r.cost_local_delivery,r.sp_local_delivery,r.services,r.nota,r.pallets_required,r.cost_of_pallet_1,r.cost_of_extra_pallets,typeof r.form_state==='object'&&r.form_state!==null?JSON.stringify(r.form_state):r.form_state,r.quote_instance_id]));
-    const lqc=['ID_REGISTRO','DATE','EMAIL','#QUOTE','ZIP/ADDRESS','COMPANY OR NAME','TYPE','SKU','PRODUCT','QTY','PRICE PER CASE','REVENUE','INSURED VALUE','BETTER COST','BETTER SHIPPING PRICE','BETTER PLATFORM','APPLIED CONFIGURATION','COST WWE','SP WWE','COST UPS','SP UPS','COST CBCFS','SP CBCFS','COST FEDEX','SP FEDEX','COST UBER FREIGHT TL','SP UBER FREIGHT TL','COST UBER FREIGHT LTL','SP UBER FREIGHT LTL','COST LOCAL DELIVERY','SP LOCAL DELIVERY','SERVICES'];
-    const legacyRows=[...(d.quotes||[]),...(d.local_quotes||[])].sort((a,b)=>num(a.id)-num(b.id));
-    for(const r of legacyRows)out.push(sqlInsert('quotes_db."cotizaciones"',lqc,[r.id_registro,r.date,r.email,r.quote,r.address,r.company_name,r.type,r.sku,r.product,r.qty,r.price_per_case,r.revenue,r.insured_value,r.better_cost,r.better_shipping_price,r.better_platform,r.applied_configuration,r.cost_wwe,r.sp_wwe,r.cost_ups,r.sp_ups,r.cost_cbcfs,r.sp_cbcfs,r.cost_fedex,r.sp_fedex,r.cost_uber_freight_tl,r.sp_uber_freight_tl,r.cost_uber_freight_ltl,r.sp_uber_freight_ltl,r.cost_local_delivery,r.sp_local_delivery,r.services]));
-    out.push('DELETE FROM quotes_db.sqlite_sequence WHERE name IN (' + ['Data_Base_Quotes','Data_Base_Local_Quotes'].map(sqlLiteral).join(',') + ');');
-    out.push('INSERT INTO quotes_db.sqlite_sequence(name,seq) SELECT ' + sqlLiteral('Data_Base_Quotes') + ', COALESCE(MAX("ID"),0) FROM quotes_db."Data_Base_Quotes";');
-    out.push('INSERT INTO quotes_db.sqlite_sequence(name,seq) SELECT ' + sqlLiteral('Data_Base_Local_Quotes') + ', COALESCE(MAX("ID"),0) FROM quotes_db."Data_Base_Local_Quotes";');
-    out.push('COMMIT;');
-    out.push('DETACH DATABASE quotes_db;');
-    // rules.db
-    out.push('BEGIN;');
-    out.push("ATTACH DATABASE 'rules.db' AS rules_db;");
-    out.push('DROP TABLE IF EXISTS rules_db."reglas";');
-    out.push('CREATE TABLE rules_db."reglas" ("ID Regla" INTEGER PRIMARY KEY AUTOINCREMENT,"Estado" TEXT DEFAULT ' + sqlLiteral('ACTIVA') + ',"Fecha" TEXT,"Categoría" TEXT,"Criterio de Búsqueda" TEXT,"Descripción" TEXT,"Sede / Ubicación" TEXT,"Modo de Envío" TEXT,"Carriers Permitidos" TEXT,"Umbral UPS (Máx. Cajas)" TEXT,"Revenue" TEXT,"Requiere Validación" TEXT,"NOTA" TEXT);');
-    const rc=['ID Regla','Estado','Fecha','Categoría','Criterio de Búsqueda','Descripción','Sede / Ubicación','Modo de Envío','Carriers Permitidos','Umbral UPS (Máx. Cajas)','Revenue','Requiere Validación','NOTA'];
-    for(const r of [...(d.rules||[])].sort((a,b)=>num(a.id_regla)-num(b.id_regla)))out.push(sqlInsert('rules_db."reglas"',rc,[r.id_regla,r.estado||'ACTIVA',r.fecha,r.categoria,r.criterio_busqueda,r.descripcion,r.sede_ubicacion,r.modo_envio,r.carriers_permitidos,r.umbral_ups,r.revenue,r.requiere_validacion,r.nota]));
-    out.push('DELETE FROM rules_db.sqlite_sequence WHERE name IN (' + sqlLiteral('reglas') + ');');
-    out.push('INSERT INTO rules_db.sqlite_sequence(name,seq) SELECT ' + sqlLiteral('reglas') + ', COALESCE(MAX("ID Regla"),0) FROM rules_db."reglas";');
-    out.push('COMMIT;');
-    out.push('DETACH DATABASE rules_db;');
-    out.push('PRAGMA foreign_keys=ON;');
-    out.push('');
-    out.push('-- Row counts: products='+((d.products||[]).length)+', customers='+((d.customers||[]).length)+', verified='+((d.verified||[]).length)+', local_delivery_history='+((d.ld||[]).length)+', quotes='+((d.quotes||[]).length)+', local_quotes='+((d.local_quotes||[]).length)+', rules='+((d.rules||[]).length));
-    out.push('-- End LogiSuite backup');
-    return out.join('\n');
-  }
-  async function downloadDatabaseSql(){
-    const btn=document.getElementById('backup-sql'); if(btn?.disabled)return;
-    const old=btn?.innerHTML||'💾 Backup SQL'; if(btn){btn.disabled=true;btn.innerHTML='⏳ Generando SQL…'}
-    try{
-      if(!sbx||!navigator.onLine){toast('El respaldo SQL requiere conexión a Supabase.',false);return}
-      const [products,customers,verified,rules,quotes,local_quotes,ld]=await Promise.all([
-        allRows('products'),allRows('customers'),allRows('verified_configs'),allRows('rules'),
-        allRows('quotes'),allRows('local_quotes'),allRows('local_delivery_cost_history')
-      ]);
-      const sql=buildLogiSuiteSql({products,customers,verified,rules,quotes,local_quotes,ld});
-      const stamp=new Date();
-      const ds=stamp.getFullYear()+String(stamp.getMonth()+1).padStart(2,'0')+String(stamp.getDate()).padStart(2,'0')+'_'+String(stamp.getHours()).padStart(2,'0')+String(stamp.getMinutes()).padStart(2,'0')+String(stamp.getSeconds()).padStart(2,'0');
-      downloadFile('LogiSuite_Backup_'+ds+'.sql',new Blob([sql],{type:'application/sql;charset=utf-8'}));
-      const total=products.length+customers.length+verified.length+rules.length+quotes.length+local_quotes.length+ld.length;
-      toast('Respaldo SQL descargado · '+total.toLocaleString()+' registros');
-    }catch(e){console.error(e);toast('No se pudo generar el respaldo SQL: '+e.message,false)}
-    finally{if(btn){btn.innerHTML=old;btn.disabled=false}}
-  }
-  window.downloadDatabaseSql=downloadDatabaseSql;
   function ensureTopBackupButton(){
     const top=document.querySelector('.top-actions');if(!top)return;
     const theme=document.getElementById('theme')||top.firstChild||null;
     if(!document.getElementById('backup-local-db')){
       const b=document.createElement('button');b.type='button';b.id='backup-local-db';b.className='btn btn-sm btn-outline-success';b.title='Descargar products.db, quotes.db y rules.db listos para sustituir el sistema local';b.textContent='💾 DB Local';b.onclick=()=>window.downloadLocalDatabaseZip?.();
       top.insertBefore(b,theme);
-    }
-    if(!document.getElementById('backup-sql')){
-      const s=document.createElement('button');s.type='button';s.id='backup-sql';s.className='btn btn-sm btn-outline-secondary';s.title='Descargar respaldo SQL para migraciones';s.textContent='📜 SQL';s.onclick=()=>window.downloadDatabaseSql?.();
-      top.insertBefore(s,theme);
     }
   }
 
