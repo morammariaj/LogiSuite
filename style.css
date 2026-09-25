@@ -2589,3 +2589,46 @@ body[data-bs-theme=dark] .user-name-pill{
   }
   .user-name-pill{font-size:10px!important;padding:7px 10px!important}
 }
+
+
+/* ===== v66: user button without icon, matching lilac controls ===== */
+.user-name-pill{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-sizing:border-box!important;
+  width:auto!important;
+  min-width:112px!important;
+  height:40px!important;
+  padding:0 13px!important;
+  border:1px solid rgba(142,121,232,.28)!important;
+  border-radius:9px!important;
+  background:rgba(142,121,232,.12)!important;
+  color:var(--ls-lilac-dark)!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
+.user-name-pill:hover{
+  background:rgba(142,121,232,.18)!important;
+  border-color:rgba(142,121,232,.38)!important;
+}
+body[data-bs-theme=dark] .user-name-pill{
+  background:rgba(142,121,232,.18)!important;
+  border-color:rgba(173,157,244,.30)!important;
+  color:#d9d0ff!important;
+}
+body[data-bs-theme=dark] .user-name-pill:hover{
+  background:rgba(142,121,232,.25)!important;
+  border-color:rgba(173,157,244,.42)!important;
+}
+@media(max-width:1000px){
+  .top-actions .user-name-pill{
+    width:100%!important;
+    min-width:0!important;
+    height:40px!important;
+    grid-column:1/-1!important;
+    padding:0 12px!important;
+  }
+}
