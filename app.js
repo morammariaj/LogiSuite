@@ -92,15 +92,28 @@ function render(){
    if(open)closeMobileMenu(); else openMobileMenu();
   };
   backdrop?.addEventListener('click',closeMobileMenu);
-  document.addEventListener('keydown',e=>{
-   if(e.key==='Escape'&&actions.classList.contains('mobile-open'))closeMobileMenu();
-  });
+  if(window.__logiMenuKeyHandler)document.removeEventListener('keydown',window.__logiMenuKeyHandler);
+  window.__logiMenuKeyHandler=e=>{
+   const currentActions=document.getElementById('top-actions');
+   if(e.key==='Escape'&&currentActions?.classList.contains('mobile-open')){
+    currentActions.classList.remove('mobile-open');
+    document.getElementById('mobile-menu-backdrop')?.classList.remove('show');
+    document.getElementById('mobile-menu-toggle')?.setAttribute('aria-expanded','false');
+   }
+  };
+  document.addEventListener('keydown',window.__logiMenuKeyHandler);
   actions.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
    if(window.innerWidth<=1000)closeMobileMenu();
   }));
-  window.addEventListener('resize',()=>{
-   if(window.innerWidth>1000)closeMobileMenu();
-  },{passive:true});
+  if(window.__logiMenuResizeHandler)window.removeEventListener('resize',window.__logiMenuResizeHandler);
+  window.__logiMenuResizeHandler=()=>{
+   if(window.innerWidth>1000){
+    document.getElementById('top-actions')?.classList.remove('mobile-open');
+    document.getElementById('mobile-menu-backdrop')?.classList.remove('show');
+    document.getElementById('mobile-menu-toggle')?.setAttribute('aria-expanded','false');
+   }
+  };
+  window.addEventListener('resize',window.__logiMenuResizeHandler,{passive:true});
  }
  $('#theme').onclick=()=>{state.dark=!state.dark;localStorage.setItem('logisuite-dark',state.dark?'1':'0');render()};$('#logout').onclick=logout;$('#view').innerHTML=quoteView();arrangeLocalLayout();bindQuote();bindActionButtons();setupInstallInvite();startWorkClocks();}
 function quoteView(){const d=new Date();const ds=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;return `<div class="card"><h2 class="section-title">1. General Information</h2><div class="grid g3"><label><span class="label">DATE</span><input id="qdate" class="input" value="${esc(state.edit?.date||ds)}"></label><label><span class="label"># QUOTE</span><input id="qnum" class="input" value="${esc(state.edit?.quote||'')}"></label><label><span class="label">EMAIL</span><input id="qemail" class="input" value="${esc(state.edit?.email||'')}" readonly></label></div></div>
