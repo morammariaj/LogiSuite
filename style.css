@@ -2115,3 +2115,193 @@ body[data-bs-theme=dark] .logi-loading-card{
 body[data-bs-theme=dark] .top-actions{background:#211e28}
 body[data-bs-theme=dark] .mobile-menu-backdrop{background:rgba(0,0,0,.48)}
 body[data-bs-theme=dark] .mobile-menu-toggle{background:#1a1720;color:#f3eef8;border-color:#493f54}
+
+
+/* ===== v59: definitive responsive layout pass ===== */
+@media(max-width:1000px){
+  /* The two desktop columns must become one continuous tablet/mobile flow. */
+  .quote-columns{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:8px!important;
+    width:100%!important;
+  }
+  .quote-col-left,
+  .quote-col-right{
+    display:contents!important;
+  }
+  .quote-columns .area-general,
+  .quote-columns .area-customer,
+  .quote-columns .area-product,
+  .quote-columns .area-cubic,
+  .quote-columns .area-carriers,
+  .quote-columns .winner-card{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+  }
+
+  /* Product information: never squeeze labels/inputs into a narrow right column. */
+  .product-main-grid{
+    display:grid!important;
+    grid-template-columns:minmax(0,2.1fr) minmax(90px,.9fr) minmax(110px,1fr) minmax(80px,.7fr)!important;
+    gap:8px!important;
+  }
+  .product-main-grid .product-name{
+    grid-column:auto!important;
+    min-width:0!important;
+  }
+  .details-grid{
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  }
+  .dimension-grid,
+  .product-pricing{
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  }
+  .product-pricing{
+    display:grid!important;
+  }
+
+  /* Keep the lower action area clean and predictable on tablets. */
+  .action-bar{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    width:100%!important;
+    min-width:0!important;
+  }
+  .action-bar #database{
+    flex:1 1 100%!important;
+    width:100%!important;
+    min-width:0!important;
+    order:1!important;
+  }
+  .action-bar #save-slot{
+    order:2!important;
+    flex:1 1 100%!important;
+    width:100%!important;
+  }
+  .action-bar #save-slot .btn{
+    width:100%!important;
+    min-width:0!important;
+  }
+  .action-bar #view-quotes{order:3!important}
+  .action-bar #reports{order:4!important}
+  .action-bar #export{order:5!important}
+  .action-bar #toggle-note{order:6!important}
+  .action-bar #add-product{order:7!important}
+  .action-bar #clear-product{order:8!important}
+  .action-bar #clear-all{order:9!important}
+  .action-bar .action-spacer{display:none!important}
+
+  /* Database navigation should scroll horizontally instead of squeezing labels. */
+  .db-tabs{
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    -webkit-overflow-scrolling:touch!important;
+    scrollbar-width:thin;
+    white-space:nowrap!important;
+  }
+  .db-tabs .nav-link{
+    flex:0 0 auto!important;
+    white-space:nowrap!important;
+  }
+
+  /* Modal controls and tables stay inside the viewport. */
+  .modal-dialog{
+    width:calc(100vw - 16px)!important;
+    max-width:calc(100vw - 16px)!important;
+  }
+  .modal-content,
+  .modal-body{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+}
+
+@media(max-width:760px){
+  .app-topbar{
+    width:100%!important;
+    padding:8px 9px!important;
+  }
+  .quote-columns{
+    gap:6px!important;
+  }
+  .quote-columns .card,
+  .quote-columns .section-card{
+    padding:9px!important;
+  }
+
+  .product-main-grid{
+    grid-template-columns:1fr 1fr!important;
+  }
+  .product-main-grid .product-name{
+    grid-column:1/-1!important;
+  }
+  .details-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .dimension-grid,
+  .product-pricing{
+    grid-template-columns:1fr!important;
+  }
+
+  .area-customer .customer-grid{
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+  }
+  .area-customer .customer-save-wrap,
+  .area-customer .customer-save-wrap #save-cust{
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+  }
+
+  .action-bar{
+    gap:6px!important;
+    padding:7px!important;
+  }
+  .action-bar #save-slot{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:6px!important;
+  }
+  .action-bar #database{
+    flex-basis:100%!important;
+  }
+  .action-bar .btn{
+    flex:1 1 46%!important;
+    min-width:0!important;
+  }
+  .action-bar #database,
+  .action-bar #save-slot{
+    flex-basis:100%!important;
+  }
+
+  .install-invite{
+    max-width:calc(100vw - 20px)!important;
+  }
+}
+
+@media(max-width:430px){
+  .product-main-grid{
+    grid-template-columns:1fr!important;
+  }
+  .product-main-grid .product-name{
+    grid-column:auto!important;
+  }
+  .details-grid{
+    grid-template-columns:1fr!important;
+  }
+  .action-bar #save-slot{
+    grid-template-columns:1fr!important;
+  }
+  .action-bar .btn{
+    flex:1 1 100%!important;
+  }
+  .action-bar #database,
+  .action-bar #save-slot .btn{
+    width:100%!important;
+  }
+}
