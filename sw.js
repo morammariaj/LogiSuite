@@ -1,4 +1,4 @@
-const CACHE="logisuite-clean-1";
+const CACHE="logisuite-clean-2";
 self.addEventListener("install",e=>e.waitUntil(self.skipWaiting()));
 self.addEventListener("activate",e=>e.waitUntil(
   caches.keys()
