@@ -117,25 +117,61 @@ function quoteView(){const d=new Date();const ds=`${String(d.getDate()).padStart
 <div class="card"><h2 class="section-title">Productos en esta Cotización</h2><div class="scroll-x"><table class="data-table" id="cart-table"><thead><tr><th>Producto</th><th>SKU</th><th>Qty</th><th>Price</th><th>Revenue</th><th>Winner</th><th></th></tr></thead><tbody></tbody></table></div><button class="btn secondary" id="add-cart" style="margin-top:10px">Agregar producto al quote</button></div>`}
 function carrierCard(title,fields,kind){const id=kind.replace(/\W/g,'');const opt=carriers.map(x=>'<option>'+esc(x)+'</option>').join('');const head='<div class="carrier-head between"><b>'+esc(title)+'</b><span class="ship-pill carrier-head-price">$0.00</span></div>';let body='';if(kind==='WWE'||kind==='CBCFS'){const k=kind.toLowerCase();body='<label><span class="label">TRANSPORT</span><select id="'+k+'_trans" class="select">'+opt+'</select></label><div id="'+k+'_trans_other_wrap" class="transport-other hidden"><label><span class="label">SPECIFY TRANSPORT</span><input id="'+k+'_trans_other" class="input" placeholder="Specify..."></label></div><div class="grid g2 carrier-cost-grid"><label><span class="label">COST</span><input id="'+k+'_cost" class="input" type="number" step="0.01"></label><label><span class="label">ADDITIONAL</span><input id="'+k+'_add" class="input" type="number" step="0.01"></label></div><label><span class="label">SHIPPING PRICE</span><div id="ship-'+id+'" class="input result shipping-result">$0.00</div></label><div class="exact" id="exact-'+id+'">Exact: $0.00</div>'+(kind==='CBCFS'?'<div id="cbcfs-alert" class="carrier-alert hidden"></div>':'');}else if(kind==='UPS'){body='<label><span class="label">COST</span><input id="ups_cost" class="input result" readonly></label><div class="grid g2 carrier-cost-grid"><label><span class="label">D.V x CASE</span><input id="ups_dv" class="input" type="number" step="0.01"></label><label><span class="label">TOT D.V</span><div id="ups_tot_dv" class="input result shipping-result">$0.00</div></label><label><span class="label">SGN x CASE</span><input id="ups_sgn" class="input" type="number" step="0.01"></label><label><span class="label">TOT SGN</span><div id="ups_tot_sgn" class="input result shipping-result">$0.00</div></label><label><span class="label">SMALL PK x CS</span><input id="ups_sm" class="input" type="number" step="0.01"></label><label><span class="label">TOT SMALL</span><div id="ups_tot_sm" class="input result shipping-result">$0.00</div></label><label><span class="label">ADD UPS</span><input id="ups_add" class="input" type="number" step="0.01"></label><label><span class="label">TOT ADD</span><div id="ups_tot_add" class="input result shipping-result">$0.00</div></label></div><label><span class="label">SHIPPING PRICE</span><div id="ship-UPS" class="input result shipping-result">$0.00</div></label><div class="exact" id="exact-UPS">Exact: $0.00</div>';}else if(kind==='FedEx'){body='<div class="grid g2 carrier-cost-grid"><label><span class="label">COST</span><input id="fedex_cost" class="input" type="number" step="0.01"></label><label><span class="label">ADDITIONAL</span><input id="fedex_add" class="input" type="number" step="0.01"></label></div><label><span class="label">SHIPPING PRICE</span><div id="ship-FedEx" class="input result shipping-result">$0.00</div></label><div class="exact" id="exact-FedEx">Exact: $0.00</div>';}else if(kind==='Uber Freight'){body='<label><span class="label">MODO</span><select id="uber_mode" class="select"><option>TL</option><option>LTL</option></select></label><div id="uber_trans_wrap" class="transport-other hidden"><label><span class="label">TRANSPORT</span><select id="uber_trans" class="select">'+opt+'</select></label><div id="uber_trans_other_wrap" class="transport-other hidden"><label><span class="label">SPECIFY TRANSPORT</span><input id="uber_trans_other" class="input" placeholder="Specify..."></label></div></div><div class="grid g2 carrier-cost-grid"><label><span class="label">COST</span><input id="uber_cost" class="input" type="number" step="0.01"></label><label><span class="label">ADDITIONAL</span><input id="uber_add" class="input" type="number" step="0.01"></label></div><div id="uber_trucks_wrap"><label><span class="label"># TRUCKS</span><input id="uber_trucks" class="input" type="number" min="1" step="1" value="1"></label></div><label><span class="label">SHIPPING PRICE</span><div id="ship-UberFreight" class="input result shipping-result">$0.00</div></label><div class="exact" id="exact-UberFreight">Exact: $0.00</div>';}else if(kind==='LOCAL DELIVERY'){body='<div id="customheight_carrier_wrap" class="hidden"><label><span class="label">ALTURA PERSONALIZADA</span><input id="customheight_carrier" class="input" type="number" step="0.01"></label></div><label><span class="label">LÍMITE ALTURA</span><select id="maxheight_carrier" class="select"><option>Altura Máxima: 90&quot;</option><option>Altura Máxima: 41&quot;</option><option>Altura Máxima: Personalizada</option></select></label><label><span class="label">DESTINO</span><input id="ld_address" class="input" readonly></label><div class="grid g3 ld-grid"><label><span class="label"># PALLETS REQ</span><input id="ld_pallets" class="input result" value="1" type="number" readonly></label><label><span class="label">1er PALLET ($)</span><input id="ld_cost1" class="input" type="number" step="0.01"></label><label><span class="label">EXTRA ($)</span><input id="ld_cost_extra" class="input" type="number" step="0.01" value="20"></label></div><label><span class="label">SHIPPING PRICE</span><div id="ship-LOCALDELIVERY" class="input result shipping-result">$0.00</div></label><div class="ld-revenue">Revenue: 80</div><div class="exact" id="exact-LOCALDELIVERY">Cost: $0.00 / SP $0.00</div>';}return '<div class="carrier" id="card-'+id+'">'+head+body+'</div>';}
 function openBootstrapModal(id,title,bodyHtml,onReady){
- document.querySelectorAll('body>.modal').forEach(el=>{
-  if(el.id===id)return;
-  const inst=window.bootstrap?.Modal?.getInstance(el);
-  if(inst)inst.dispose();
-  el.remove();
- });
+ const old=document.getElementById(id);
+ if(old){
+  try{window.bootstrap?.Modal?.getInstance(old)?.dispose()}catch(_){}
+  old.remove();
+ }
  document.querySelectorAll('body>.modal-backdrop').forEach(x=>x.remove());
  document.body.classList.remove('modal-open');
+ document.documentElement.classList.remove('modal-open');
  document.body.style.removeProperty('padding-right');
+ document.body.style.removeProperty('overflow');
+ document.body.style.removeProperty('touch-action');
+ document.documentElement.style.removeProperty('overflow');
+ document.documentElement.style.removeProperty('touch-action');
+
  const wrap=document.createElement('div');
  wrap.className='modal fade';
  wrap.id=id;
  wrap.tabIndex=-1;
- wrap.innerHTML='<div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content glass-modal"><div class="modal-header"><h5 class="modal-title">'+esc(title)+'</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">'+bodyHtml+'</div></div></div>';
+ wrap.setAttribute('aria-hidden','true');
+ wrap.innerHTML='<div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content glass-modal"><div class="modal-header"><h5 class="modal-title">'+esc(title)+'</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div><div class="modal-body">'+bodyHtml+'</div></div></div>';
  document.body.appendChild(wrap);
- const modal=window.bootstrap?.Modal?.getOrCreateInstance(wrap,{backdrop:true,keyboard:true,focus:true});
+
+ const modal=window.bootstrap?.Modal?.getOrCreateInstance(wrap,{backdrop:true,keyboard:true,focus:false,scroll:true});
  if(!modal)throw new Error('Bootstrap no está disponible');
- wrap.addEventListener('shown.bs.modal',()=>{if(onReady)onReady()},{once:true});
- wrap.addEventListener('hidden.bs.modal',()=>{modal.dispose();wrap.remove();document.querySelectorAll('body>.modal-backdrop').forEach(x=>x.remove());document.body.classList.remove('modal-open');document.body.style.removeProperty('padding-right')},{once:true});
+
+ const unlock=()=>{
+  document.body.classList.remove('modal-open');
+  document.documentElement.classList.remove('modal-open');
+  document.body.style.removeProperty('padding-right');
+  document.body.style.removeProperty('overflow');
+  document.body.style.removeProperty('touch-action');
+  document.documentElement.style.removeProperty('overflow');
+  document.documentElement.style.removeProperty('touch-action');
+ };
+ const cleanup=()=>{
+  unlock();
+  document.querySelectorAll('body>.modal-backdrop').forEach(x=>x.remove());
+  try{modal.dispose()}catch(_){}
+  if(wrap.isConnected)wrap.remove();
+ };
+ wrap.addEventListener('shown.bs.modal',()=>{
+  wrap.setAttribute('aria-hidden','false');
+  onReady?.();
+ },{once:true});
+ wrap.addEventListener('hide.bs.modal',()=>{
+  unlock();
+  requestAnimationFrame(unlock);
+  setTimeout(unlock,60);
+ },{once:true});
+ wrap.addEventListener('hidden.bs.modal',cleanup,{once:true});
+ wrap.addEventListener('click',e=>{
+  if(e.target===wrap){
+   try{modal.hide()}catch(_){cleanup()}
+  }
+ });
  modal.show();
 }
 
