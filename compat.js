@@ -178,6 +178,7 @@
       const platform=isLocal?'':best+(costMode?' (COST)':'')+':';
       return {product:r.product||'',qty:String(r.qty||'')+' cases /',platform,price,config:r.applied_configuration||'',transport:transport?'- '+transport:''};
     });
+    const notes=x.rows.filter(r=>String(r.nota??'').trim()).map(r=>({product:String(r.product||r.sku||'Producto'),note:String(r.nota).trim()}));
     const serviceSet=new Set(), nl=String.fromCharCode(10); let showServices=false;
     for(const r of x.rows){
       const best=norm(costMode?actualMinCost(r).name:r.better_platform);
@@ -185,12 +186,14 @@
       String(r.services||'').split(',').map(v=>v.trim()).filter(v=>v&&v.toLowerCase()!=='none').forEach(v=>serviceSet.add(v.replace(/^.*?:/,'').replace(/^.*?\]/,'').trim()));
     }
     const services=showServices?[...serviceSet].sort().join(', '):'';
-    const copy=['QUOTE #'+first.quote,'Date: '+first.date,'Customer: '+(first.company_name||''),'Address: '+(first.address||''),'Services: '+services,'',...lines.map(z=>z.product+', '+z.qty+(z.platform?' '+z.platform:'')+' $'+Number(z.price||0).toFixed(costMode?2:0)+' ('+z.config+') '+z.transport)].join(nl);
+    const noteText=notes.length?['','NOTE:',...notes.map(n=>n.product+': '+n.note)]:[];
+    const copy=['QUOTE #'+first.quote,'Date: '+first.date,'Customer: '+(first.company_name||''),'Address: '+(first.address||''),'Services: '+services,'',...lines.map(z=>z.product+', '+z.qty+(z.platform?' '+z.platform:'')+' $'+Number(z.price||0).toFixed(costMode?2:0)+' ('+z.config+') '+z.transport),...noteText].join(nl);
     const rowHtml=lines.map(z=>'<tr><td style="padding:4px 6px;font-weight:700;border:0">'+esc(z.product)+',</td><td style="padding:4px 6px;white-space:nowrap;border:0">'+esc(z.qty)+'</td><td style="padding:4px 6px;font-weight:700;white-space:nowrap;border:0">'+esc(z.platform)+'</td><td style="padding:4px 6px;font-weight:700;white-space:nowrap;border:0">$ '+Number(z.price||0).toFixed(costMode?2:0)+'</td><td style="padding:4px 6px;border:0;color:#777">('+esc(z.config)+')</td><td style="padding:4px 6px;white-space:nowrap;border:0">'+esc(z.transport)+'</td></tr>').join('');
     const serviceHtml=services?'<p style="margin:4px 0;color:#666"><i>Services: '+esc(services)+'</i></p>':'';
-    const body='<div style="font-family:Arial,sans-serif;font-size:14px;color:var(--bs-body-color)"><div style="margin-bottom:14px"><b>Quote: #'+esc(first.quote)+'</b></div><table style="width:100%;border-collapse:collapse;margin-bottom:18px"><tbody>'+rowHtml+'</tbody></table><p style="margin:2px 0"><b>'+esc(first.type||'')+'</b></p><p style="margin:2px 0"><b>'+esc(first.company_name||'')+'</b></p><p style="margin:2px 0">'+esc(first.address||'')+'</p>'+serviceHtml+'<div class="compat-action-row" style="justify-content:flex-end;margin-top:16px"><button class="btn primary" id="preview-copy">📋 Copiar (Correo)</button><button class="btn success" id="preview-pdf">📄 Preview PDF</button></div></div>';
+    const noteHtml=notes.length?'<div style="margin-top:12px;padding-top:8px;border-top:1px solid #ddd;font-size:11px;line-height:1.4;color:#666"><b>NOTE:</b>'+notes.map(n=>'<div style="margin-top:3px"><b>'+esc(n.product)+':</b> '+esc(n.note)+'</div>').join('')+'</div>':'';
+    const body='<div style="font-family:Arial,sans-serif;font-size:14px;color:var(--bs-body-color)"><div style="margin-bottom:14px"><b>Quote: #'+esc(first.quote)+'</b></div><table style="width:100%;border-collapse:collapse;margin-bottom:18px"><tbody>'+rowHtml+'</tbody></table><p style="margin:2px 0"><b>'+esc(first.type||'')+'</b></p><p style="margin:2px 0"><b>'+esc(first.company_name||'')+'</b></p><p style="margin:2px 0">'+esc(first.address||'')+'</p>'+serviceHtml+noteHtml+'<div class="compat-action-row" style="justify-content:flex-end;margin-top:16px"><button class="btn primary" id="preview-copy">📋 Copiar (Correo)</button><button class="btn success" id="preview-pdf">📄 Preview PDF</button></div></div>';
     window.openBootstrapModal('compatPreviewModal','Preview - Quote #'+first.quote,body,()=>{
-      $('#preview-copy').onclick=()=>copyText(copy).then(()=>toast('Cotización copiada al portapapeles')).catch(()=>toast('No se pudo copiar',false));
+      $('#preview-copy').onclick=()=>copyText(copy).then(()=>toast('Cotización copiada al portapapeles')).catch(e=>toast(e?.message||'No se pudo copiar',false));
       $('#preview-pdf').onclick=()=>printReport(costMode?'Quote Cost Preview':'Quote Preview','QUOTE #'+first.quote+' | DATE: '+first.date+' | CUSTOMER: '+(first.company_name||''),lines.map(z=>({PRODUCT:z.product,QTY:z.qty,PLATFORM:z.platform,PRICE:Number(z.price||0).toFixed(costMode?2:0),CONFIGURATION:z.config,TRANSPORT:z.transport})));
     });
   }
@@ -284,9 +287,16 @@
   }
   window.downloadLocalDatabaseZip=downloadLocalDatabaseZip;
 
-  function copyText(text){
-    if(navigator.clipboard?.writeText)return navigator.clipboard.writeText(text);
-    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();return Promise.resolve();
+  async function copyText(text){
+    const value=String(text??'');
+    if(navigator.clipboard?.writeText){try{await navigator.clipboard.writeText(value);return true}catch(_){}}
+    const ta=document.createElement('textarea');ta.value=value;ta.readOnly=true;ta.setAttribute('aria-label','Texto de la cotización para copiar manualmente');
+    ta.style.cssText='position:fixed;left:8px;bottom:8px;width:calc(100vw - 16px);height:170px;z-index:20000;opacity:.98;background:#fff;color:#111;border:2px solid #8e79e8;border-radius:8px;padding:8px;font-size:16px;line-height:1.3';
+    document.body.appendChild(ta);ta.focus({preventScroll:true});ta.select();ta.setSelectionRange(0,value.length);
+    let copied=false;try{copied=document.execCommand('copy')}catch(_){}
+    if(copied){ta.remove();return true}
+    ta.readOnly=false;ta.scrollTop=0;
+    throw new Error('El navegador bloqueó la copia automática. El texto quedó seleccionado abajo; usa Copiar en el menú del teléfono o tablet.');
   }
 
   function detailsColumns(mode){
@@ -320,7 +330,7 @@
       <div class="compat-scroll compat-details-table"><table class="data-table"><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table></div>`;
       const modal=$('#compatDetailsModal .modal-body'); if(!modal)return; modal.innerHTML=html;
       modal.querySelectorAll('[data-detail-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.detailMode;build()});
-      $('#detail-copy').onclick=()=>copyText(dataForClipboard).then(()=>toast('Detalles copiados al portapapeles')).catch(()=>toast('No se pudo copiar',false));
+      $('#detail-copy').onclick=()=>copyText(dataForClipboard).then(()=>toast('Detalles copiados al portapapeles')).catch(e=>toast(e?.message||'No se pudo copiar',false));
       $('#detail-xlsx').onclick=()=>downloadXlsx(`Quote_${first.quote}_${mode}`,rows,cols);
       $('#detail-pdf').onclick=()=>printReport(title,`DATE: ${first.date} | CUSTOMER: ${first.company_name||''}`,rows.map(r=>Object.fromEntries(cols.map(c=>[c,r[c]??'']))));
     };
@@ -376,6 +386,7 @@
       searchQuotes.onclick=()=>{st.q=vqEl.value.trim();st.from=vfEl.value;st.to=vtEl.value;st.type=vqtEl.value;st.sort=vqsEl.value;st.page=0;compatLoadQuotes()};
       clearQuotes.onclick=()=>{st.q='';st.from='';st.to='';st.type='';st.sort='-date';st.page=0;compatLoadQuotes()};
       host.querySelectorAll('[data-qsp]').forEach(b=>b.onclick=()=>compatOpenPreview(b.dataset.qsp,'SP'));host.querySelectorAll('[data-qco]').forEach(b=>b.onclick=()=>compatOpenPreview(b.dataset.qco,'COST'));host.querySelectorAll('[data-qdet]').forEach(b=>b.onclick=()=>compatOpenDetails(b.dataset.qdet));host.querySelectorAll('[data-qedit]').forEach(b=>b.onclick=()=>legacy.editQuote?.(b.dataset.qedit));host.querySelectorAll('[data-qdel]').forEach(b=>b.onclick=()=>compatDeleteQuote(b.dataset.qdel));
+      renderProductSuggestions();
       host.querySelectorAll('[data-pager="first"]').forEach(b=>b.onclick=()=>{st.page=0;compatLoadQuotes()});host.querySelectorAll('[data-pager="prev"]').forEach(b=>b.onclick=()=>{st.page=Math.max(0,st.page-1);compatLoadQuotes()});host.querySelectorAll('[data-pager="next"]').forEach(b=>b.onclick=()=>{st.page=Math.min(pages-1,st.page+1);compatLoadQuotes()});host.querySelectorAll('[data-pager="last"]').forEach(b=>b.onclick=()=>{st.page=pages-1;compatLoadQuotes()});host.querySelectorAll('.compat-page-size').forEach(b=>b.onchange=e=>{st.size=Number(e.target.value);st.page=0;compatLoadQuotes()})
     }catch(e){console.error(e);toast('No se pudieron cargar las cotizaciones: '+e.message,false)}
   }
@@ -554,7 +565,7 @@
   /* Practical DB tables: filters, ordering and pagination. */
   const dbPager={};
   const CRUD_CONFIG={
-    products:{table:'products',search:['sku','product_list','category','product_type','product'],filters:[['category','Category'],['product_type','Type']],sorts:[['product_list','Product A → Z'],['-product_list','Product Z → A'],['sku','SKU A → Z'],['-sku','SKU Z → A']]},
+    products:{table:'products',search:['sku','product_list','category','product_type','product','paper_oz','color','package_units','weight','height','ti','hi','tihi','dimensions','length_in','width_in','height_in','information','note'],filters:[['category','Category'],['product_type','Type']],sorts:[['product_list','Product A → Z'],['-product_list','Product Z → A'],['sku','SKU A → Z'],['-sku','SKU Z → A']]},
     customers:{table:'customers',search:['id_code','type','company_name','address'],filters:[['type','Type']],sorts:[['company_name','Name A → Z'],['-company_name','Name Z → A'],['address','Address A → Z'],['-id_cliente','ID newest']]},
     verified_configs:{table:'verified_configs',search:['product_list','verified_config','category','product_type','information_source','quantity'],filters:[['category','Category'],['product_type','Type'],['status','Status']],sorts:[['-date','Date newest'],['date','Date oldest'],['product_list','Product A → Z'],['-id','ID newest']]},
     rules:{table:'rules',search:['categoria','descripcion','sede_ubicacion','modo_envio','carriers_permitidos','estado'],filters:[['categoria','Category'],['estado','Status'],['modo_envio','Shipping mode']],sorts:[['id_regla','ID low → high'],['-id_regla','ID high → low'],['-fecha','Date newest'],['fecha','Date oldest']]}
@@ -562,7 +573,7 @@
   function dbEnsureCss(){
     if(document.getElementById('logi-db-css'))return;
     const s=document.createElement('style');s.id='logi-db-css';
-    s.textContent='.compat-db-toolbar{display:grid;grid-template-columns:minmax(220px,2fr) repeat(4,minmax(120px,1fr));gap:8px;align-items:end;margin:8px 0 12px}.compat-db-field{min-width:0}.compat-db-field .label{display:block;margin-bottom:4px;font-size:11px;font-weight:800}.compat-pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}.compat-pager-info{font-size:12px;opacity:.78}.compat-quote-actions{display:grid;grid-template-columns:repeat(5,minmax(70px,1fr));gap:5px;align-items:center;min-width:390px}.compat-quote-actions .btn{width:100%;margin:0}@media(max-width:900px){.compat-db-toolbar{grid-template-columns:1fr 1fr}.compat-db-toolbar .compat-db-search{grid-column:1/-1}.compat-quote-actions{min-width:0;grid-template-columns:repeat(2,minmax(72px,1fr))}}';
+    s.textContent='.compat-db-toolbar{display:grid;grid-template-columns:minmax(220px,2fr) repeat(4,minmax(120px,1fr));gap:8px;align-items:end;margin:8px 0 12px}.compat-db-field{min-width:0}.compat-db-field .label{display:block;margin-bottom:4px;font-size:11px;font-weight:800}.compat-pager{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}.compat-pager-info{font-size:12px;opacity:.78}.compat-quote-actions{display:grid;grid-template-columns:repeat(5,minmax(70px,1fr));gap:5px;align-items:center;min-width:390px}.compat-quote-actions .btn{width:100%;margin:0}.compat-db-search{position:relative;z-index:4}.compat-db-search .suggestions{top:calc(100% - 2px);z-index:1205}.compat-db-search .suggestion{padding:9px 10px}@media(max-width:900px){.compat-db-toolbar{grid-template-columns:1fr 1fr}.compat-db-toolbar .compat-db-search{grid-column:1/-1}.compat-quote-actions{min-width:0;grid-template-columns:repeat(2,minmax(72px,1fr))}}';
     document.head.appendChild(s)
   }
   function dbPagerHtml(page,pages,total,size){
@@ -589,13 +600,16 @@
     if(!sbx)return;const host=$('#crud-table');if(!host)return;
     const cfg=CRUD_CONFIG[kind];if(!cfg)return legacy.bindCrud?.(kind);
     dbEnsureCss();dbPager[kind]=dbPager[kind]||{page:0,size:25,q:'',filters:{},sort:cfg.sorts[0][0]};
-    const st=dbPager[kind];if(reset!==false)st.page=0;
+    const st=dbPager[kind];if(reset!==false){st.page=0;st.rows=null}
     try{
-      const rows=await allRows(cfg.table);
+      const rows=Array.isArray(st.rows)?st.rows:(st.rows=await allRows(cfg.table));
       const filterHtml=cfg.filters.map(f=>'<label class="compat-db-field"><span class="label">'+esc(f[1])+'</span><select class="select" data-db-filter="'+esc(f[0])+'"><option value="">All</option>'+[...new Set(rows.map(r=>String(r?.[f[0]]??'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es')).map(v=>'<option value="'+esc(v)+'"'+(st.filters[f[0]]===v?' selected':'')+'>'+esc(v)+'</option>').join('')+'</select></label>').join('');
       const sortHtml=cfg.sorts.map(x=>'<option value="'+esc(x[0])+'"'+(st.sort===x[0]?' selected':'')+'>'+esc(x[1])+'</option>').join('');
-      const toolbar=dbMakeToolbar(host,'compat-crud-toolbar','<label class="compat-db-field compat-db-search"><span class="label">Search</span><input id="compat-crud-search" class="input" placeholder="Name, code, address..." value="'+esc(st.q)+'"></label>'+filterHtml+'<label class="compat-db-field"><span class="label">Order</span><select id="compat-crud-sort" class="select">'+sortHtml+'</select></label><button type="button" class="btn primary" id="compat-crud-apply">Apply</button><button type="button" class="btn secondary" id="compat-crud-clear">Clear</button>');
-      const q=norm(st.q);let filtered=rows.filter(r=>!q||cfg.search.some(k=>norm(r?.[k]).includes(q)));
+      const toolbarSearch=kind==='products'
+        ?'<label class="compat-db-field compat-db-search autocomplete"><span class="label">Search products</span><input id="compat-crud-search" class="input" aria-autocomplete="list" placeholder="SKU, name, dimensions, category..." value="'+esc(st.q)+'"><div id="compat-crud-suggestions" class="suggestions hidden" role="listbox"></div></label>'
+        :'<label class="compat-db-field compat-db-search"><span class="label">Search</span><input id="compat-crud-search" class="input" placeholder="Name, code, address..." value="'+esc(st.q)+'"></label>';
+      const toolbar=dbMakeToolbar(host,'compat-crud-toolbar',toolbarSearch+filterHtml+'<label class="compat-db-field"><span class="label">Order</span><select id="compat-crud-sort" class="select">'+sortHtml+'</select></label><button type="button" class="btn primary" id="compat-crud-apply">Apply</button><button type="button" class="btn secondary" id="compat-crud-clear">Clear</button>');
+      const q=norm(st.q),qCompact=q.replace(/ /g,'').replace(/×/g,'');let filtered=rows.filter(r=>!q||cfg.search.some(k=>norm(r?.[k]).includes(q)||norm(r?.[k]).replace(/ /g,'').replace(/×/g,'').includes(qCompact)));
       Object.entries(st.filters).forEach(([k,v])=>{if(v)filtered=filtered.filter(r=>norm(r?.[k])===norm(v))});
       dbSortRows(filtered,st.sort);
       const pages=Math.max(1,Math.ceil(filtered.length/st.size));if(st.page>=pages)st.page=pages-1;
@@ -608,7 +622,20 @@
       host.innerHTML=body+dbPagerHtml(st.page,pages,filtered.length,st.size);
       const searchEl=toolbar.querySelector('#compat-crud-search'),applyEl=toolbar.querySelector('#compat-crud-apply'),clearEl=toolbar.querySelector('#compat-crud-clear'),sortEl=toolbar.querySelector('#compat-crud-sort');
       if(!searchEl||!applyEl||!clearEl||!sortEl)throw new Error('No se pudieron inicializar los filtros de la tabla');
-      searchEl.oninput=e=>{st.q=e.target.value;st.page=0};
+      const renderProductSuggestions=()=>{
+        const menu=toolbar.querySelector('#compat-crud-suggestions');if(!menu)return;
+        if(st.hideSuggestionsOnce){st.hideSuggestionsOnce=false;menu.innerHTML='';menu.classList.add('hidden');return}
+        const term=norm(searchEl.value);if(!term){menu.innerHTML='';menu.classList.add('hidden');return}
+        const compact=s=>norm(s).replace(/ /g,'').replace(/×/g,'');const compactTerm=compact(term);
+        const matches=rows.map((r,i)=>({r,i,values:cfg.search.map(k=>String(r?.[k]??''))})).filter(x=>x.values.some(v=>norm(v).includes(term)||compact(v).includes(compactTerm))).sort((a,b)=>{
+          const rank=r=>{const name=norm(r.product_list),sku=norm(r.sku),product=norm(r.product);if(name.startsWith(term)||sku.startsWith(term))return 0;if(product.startsWith(term))return 1;return 2};
+          return rank(a.r)-rank(b.r)||norm(a.r.product_list).localeCompare(norm(b.r.product_list),'es');
+        }).slice(0,30);
+        menu.innerHTML=matches.map(x=>'<div class="suggestion" role="option" tabindex="0" data-product-suggest="'+x.i+'"><b>'+esc(x.r.product_list||x.r.product||x.r.sku||'Producto')+'</b><small>'+esc([x.r.sku,x.r.category,x.r.product_type,x.r.dimensions].filter(Boolean).join(' · '))+'</small></div>').join('');
+        menu.classList.toggle('hidden',!matches.length);
+        menu.querySelectorAll('[data-product-suggest]').forEach(el=>{const choose=()=>{const row=rows[Number(el.dataset.productSuggest)];if(!row)return;st.q=String(row.sku||row.product_list||'');st.page=0;st.hideSuggestionsOnce=true;compatLoadCrud(kind,false)};el.onclick=choose;el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose()}}});
+      };
+      searchEl.oninput=e=>{const caret=e.target.selectionStart??e.target.value.length;st.q=e.target.value;st.page=0;compatLoadCrud(kind,false).then(()=>{const current=document.getElementById('compat-crud-search');if(current){current.focus({preventScroll:true});const pos=Math.min(caret,current.value.length);current.setSelectionRange(pos,pos)}})};
       applyEl.onclick=()=>{st.q=searchEl.value.trim();st.filters={};toolbar.querySelectorAll('[data-db-filter]').forEach(x=>{if(x.value)st.filters[x.dataset.dbFilter]=x.value});st.sort=sortEl.value;compatLoadCrud(kind)};
       clearEl.onclick=()=>{st.q='';st.filters={};st.sort=cfg.sorts[0][0];compatLoadCrud(kind)};
       host.querySelectorAll('[data-pager="first"]').forEach(b=>b.onclick=()=>{st.page=0;compatLoadCrud(kind,false)});
@@ -619,12 +646,12 @@
       const find=i=>filtered[i];
       host.querySelectorAll('[data-db-view]').forEach(b=>b.onclick=()=>{const r=find(+b.dataset.dbView);if(r)showProductFicha(r)});
       host.querySelectorAll('[data-db-edit]').forEach(b=>b.onclick=()=>{const r=find(+b.dataset.dbEdit);if(r)window.editCrud(kind,r)});
-      host.querySelectorAll('[data-db-del]').forEach(b=>b.onclick=async()=>{const r=find(+b.dataset.dbDel);if(!r||!confirm('¿Eliminar registro?'))return;const pk=kind==='products'?'id':'id_cliente';const res=await sbx.from(cfg.table).delete().eq(pk,r[pk]);if(res.error){toast(res.error.message,false);return}await loadReferenceData();compatLoadCrud(kind,false)});
+      host.querySelectorAll('[data-db-del]').forEach(b=>b.onclick=async()=>{const r=find(+b.dataset.dbDel);if(!r||!confirm('¿Eliminar registro?'))return;const pk=kind==='products'?'id':'id_cliente';const res=await sbx.from(cfg.table).delete().eq(pk,r[pk]);if(res.error){toast(res.error.message,false);return}st.rows=null;await loadReferenceData();compatLoadCrud(kind,false)});
       host.querySelectorAll('[data-v-edit]').forEach(b=>b.onclick=()=>{const r=filtered.find(x=>String(x.id)===b.dataset.vEdit);if(r)compatEditVerified(r)});
-      host.querySelectorAll('[data-v-del]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Eliminar verificado?'))return;const res=await sbx.from('verified_configs').delete().eq('id',b.dataset.vDel);if(res.error){toast(res.error.message,false);return}compatLoadCrud('verified_configs',false)});
+      host.querySelectorAll('[data-v-del]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Eliminar verificado?'))return;const res=await sbx.from('verified_configs').delete().eq('id',b.dataset.vDel);if(res.error){toast(res.error.message,false);return}if(dbPager.verified_configs)dbPager.verified_configs.rows=null;compatLoadCrud('verified_configs',false)});
       host.querySelectorAll('[data-r-edit]').forEach(b=>b.onclick=()=>{const r=filtered.find(x=>String(x.id_regla)===b.dataset.rEdit);if(r)compatEditRule(r)});
       host.querySelectorAll('[data-r-toggle]').forEach(b=>b.onclick=async()=>{const r=filtered.find(x=>String(x.id_regla)===b.dataset.rToggle);if(!r)return;let note=r.nota||'';if(norm(r.estado)==='ACTIVA'){note=prompt('Motivo:',note||'')??note;if(!note.trim())return}const res=await sbx.from('rules').update({estado:norm(r.estado)==='ACTIVA'?'INACTIVA':'ACTIVA',nota:note}).eq('id_regla',r.id_regla);if(res.error){toast(res.error.message,false);return}toast('Regla actualizada');compatLoadCrud('rules',false)});
-      host.querySelectorAll('[data-r-del]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Eliminar regla?'))return;const res=await sbx.from('rules').delete().eq('id_regla',b.dataset.rDel);if(res.error){toast(res.error.message,false);return}compatLoadCrud('rules',false)});
+      host.querySelectorAll('[data-r-del]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Eliminar regla?'))return;const res=await sbx.from('rules').delete().eq('id_regla',b.dataset.rDel);if(res.error){toast(res.error.message,false);return}if(dbPager.rules)dbPager.rules.rows=null;compatLoadCrud('rules',false)});
     }catch(e){console.error(e);toast('No se pudo cargar la tabla: '+e.message,false)}
   }
   window.bindCrud=async function(kind){
