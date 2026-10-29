@@ -346,8 +346,9 @@ async function saveCustomerWeb(){
  const obj={id_code:code,type,company_name:company,address,accessories:local?'-':($('#selected-services')?.value||''),local_delivery_cost_1:local?($('#ld_cost1')?.value||'-'):'-',local_delivery_cost_extra:local?($('#ld_cost_extra')?.value||'-'):'-'};
  if(btn){btn.disabled=true;btn.setAttribute('aria-busy','true')}
  try{
-  const res=ex?await sb.from('customers').update(obj).eq('id_cliente',ex.id_cliente):await sb.from('customers').insert(obj);
+  const res=ex?await sb.from('customers').update(obj).eq('id_cliente',ex.id_cliente).select('id_cliente').maybeSingle():await sb.from('customers').insert(obj);
   if(res.error){toast('No se pudo guardar el cliente: '+res.error.message,false);return}
+  if(ex&&!res.data){toast('El cliente no se actualizó. Comprueba los permisos de actualización en Supabase.',false);return}
   try{
    state.customers=await fetchAllRows('customers','*');
    const saved=state.customers.find(x=>norm(x.company_name)===norm(company)&&norm(x.address)===norm(address));if(saved)state.selectedCustomer=saved;
@@ -524,7 +525,7 @@ function editCrud(kind,row){
    await loadReferenceData();
    toast('Guardado correctamente');
    window.bootstrap?.Modal?.getInstance($('#crudEditModal'))?.hide();
-   loadCrud(kind);
+    if(typeof window.loadCrud==='function')window.loadCrud(kind,true);else loadCrud(kind);
   };
  });
 }
